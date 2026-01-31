@@ -117,7 +117,15 @@
       font-family:"GeistRegular", system-ui, sans-serif;
     }
     body.is-waiting #generationStatus{ display:block; }
+    #generationTitle{
+      font-size:18px;
+      letter-spacing:0.6px;
+      text-transform:uppercase;
+      margin-bottom:8px;
+    }
     #generationTimer{
+      font-family:"RedactionItalic", system-ui, sans-serif;
+      font-style:italic;
       font-size:28px;
       letter-spacing:0.5px;
       margin-bottom:12px;
@@ -164,6 +172,11 @@
     .prompt-body{
       font-family:"GeistRegular", system-ui, sans-serif;
       font-size:32.4px;
+    }
+    .prompt-timestamp{
+      font-family:"GeistRegular", system-ui, sans-serif;
+      font-size:22.7px; /* 30% smaller than prompt-body */
+      margin-top:8px;
     }
 
 
@@ -318,6 +331,7 @@
         <canvas id="placeholder3d"></canvas>
         <canvas id="placeholder"></canvas>
         <div id="generationStatus" aria-live="polite">
+          <div id="generationTitle">Generating Hyperreality</div>
           <div id="generationTimer">01:00</div>
           <div class="progressTrack">
             <div id="generationProgress" class="progressFill"></div>
@@ -751,9 +765,13 @@
       body.textContent = values.filter(Boolean).join(", ");
 
       const ts = parseCreatedAt(meta);
+      const tsLine = document.createElement("div");
+      tsLine.className = "prompt-timestamp";
+      tsLine.textContent = ts ? ts.toLocaleString() : "—";
 
       metaEl.appendChild(label);
       metaEl.appendChild(body);
+      metaEl.appendChild(tsLine);
     }
 
     async function fetchImages(){
