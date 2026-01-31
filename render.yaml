@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: synthetic-distrust-web
+    env: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: REPLICATE_API_TOKEN
+        sync: false
+    # Uncomment to persist generated images across deploys/restarts
+    # disk:
+    #   name: out
+    #   mountPath: /opt/render/project/src/out
+    #   sizeGB: 1

@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Galerie</title>
+    <style>
+      @font-face {
+        font-family: "RedactionItalic";
+        font-style: italic;
+        font-weight: 400;
+        src: url("./fonts/Redaction-Italic.otf") format("opentype");
+      }
+      @font-face {
+        font-family: "RedactionRegular";
+        font-style: normal;
+        font-weight: 400;
+        src: url("./fonts/Redaction-Regular.otf") format("opentype");
+      }
+      @font-face {
+        font-family: "GeistRegular";
+        font-style: normal;
+        font-weight: 400;
+        src: url("./fonts/Geist-Regular.otf") format("opentype");
+      }
+      :root { --col-width: 360px; }
+      body { font-family: system-ui, sans-serif; margin: 0; padding: 0; }
+      main { display: flex; flex-direction: column; align-items: center; }
+      .hero {
+        width: 100%;
+        min-height: 110vh;
+        height: 110vh;
+        padding: 160px 16px 32px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .gallery {
+        width: 100%;
+        padding: 32px 16px 40px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .scroll-hint {
+        margin-top: auto;
+        font-size: 14.5px;
+        font-family: "GeistRegular", system-ui, sans-serif;
+        color: #e6007e;
+        text-align: center;
+      }
+      .top { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; width: 100%; justify-content: center; }
+      button {
+        padding: 10px 14px;
+        cursor: pointer;
+        font-family: "RedactionItalic", system-ui, sans-serif;
+        font-size: 2rem;
+        letter-spacing: 0;
+        background: #e6007e;
+        border-radius: 40px;
+        font-style: italic;
+        color: #fff;
+        border: 1.5px solid #e6007e;
+        box-shadow: none;
+      }
+      button.is-loading {
+        background: #fff;
+        color: #e6007e;
+      }
+      .actions {
+        position: fixed;
+        left: 16px;
+        right: calc(16px + 1.2%);
+        top: 20px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: center;
+        width: min(100%, var(--col-width));
+        margin: 0 auto;
+        padding: 0;
+        box-sizing: border-box;
+        z-index: 20;
+        transform: translateX(6px);
+      }
+      #status {
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        min-width: 198px;
+        padding: 7px 11px;
+        border-radius: 999px;
+        background: #e6007e;
+        color: #fff;
+        font-family: "GeistRegular", system-ui, sans-serif;
+        font-size: 1rem;
+        border: 1.5px solid #e6007e;
+        text-align: center;
+        z-index: 25;
+        pointer-events: none;
+      }
+      #status.active {
+        opacity: 1;
+      }
+      .progress-row {
+        position: fixed;
+        left: 16px;
+        right: 16px;
+        top: 96px;
+        width: min(100%, var(--col-width));
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 19;
+        background: rgba(255, 255, 255, 0.5);
+        padding: 10px 12px;
+        box-sizing: border-box;
+      }
+      .progress-row.active { display: flex; }
+      .alert-banner {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        min-width: 198px;
+        padding: 7px 11px;
+        background: #e6007e;
+        color: #fff;
+        font-family: "GeistRegular", system-ui, sans-serif;
+        font-size: 1rem;
+        text-align: center;
+        display: none;
+        z-index: 25;
+        border-radius: 999px;
+      }
+      .alert-banner.is-visible { display: block; }
+      .progress {
+        position: relative;
+        width: 110%;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(255, 0, 255, 0.15);
+        overflow: hidden;
+        display: block;
+      }
+      .progress .bar {
+        position: absolute;
+        inset: 0;
+        width: 20%;
+        background: #e6007e;
+        border-radius: 999px;
+        transform: translateX(-100%);
+      }
+      .elapsed-bubble {
+        min-width: 48px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #e6007e;
+        color: #fff;
+        font-family: "GeistRegular", system-ui, sans-serif;
+        font-size: 1rem;
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .elapsed-bubble.active { display: inline-flex; }
+      .featured {
+        margin-bottom: 40px;
+        max-width: var(--col-width);
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+      .featured .card { border: none; padding: 0; width: 100%; }
+      .img-wrap { width: 100%; overflow: hidden; }
+      .img-wrap.is-loading {
+        background: #e6007e;
+        aspect-ratio: 9 / 16;
+        min-height: 640px;
+        position: relative;
+        overflow: hidden;
+      }
+      .placeholder-sphere {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: none;
+      }
+      .img-wrap.is-loading.is-animating .placeholder-sphere {
+        display: block;
+      }
+      .placeholder-card .img-wrap.is-loading::before {
+        content: "";
+        display: block;
+        padding-top: calc(16 / 9 * 100%);
+      }
+      .img-wrap img { width: 100%; height: auto; display: block; border-radius: 0; transform: scale(1.1); transform-origin: center; }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 40px;
+        width: 100%;
+        max-width: var(--col-width);
+        justify-items: center;
+      }
+      .card { padding: 0; border: none; width: 100%; max-width: var(--col-width); }
+      .placeholder-card { width: 100%; }
+      .card.slide-out {
+        transform: translateY(18px);
+        opacity: 0;
+        transition: transform 360ms ease, opacity 360ms ease;
+      }
+      .placeholder-card.is-hidden {
+        display: none;
+      }
+      .meta {
+        margin-top: 16px;
+        font-size: 14.5px;
+        white-space: pre-wrap;
+        opacity: 1;
+        text-align: center;
+        font-family: "GeistRegular", system-ui, sans-serif;
+        color: #e6007e;
+        line-height: 1.2;
+        padding: 0 4px;
+        border-radius: 0;
+      }
+      .meta .headline {
+        display: none;
+        font-size: 14.5px;
+        padding-bottom: 4px;
+        font-family: "GeistRegular", system-ui, sans-serif;
+        font-style: normal;
+        line-height: 1.2;
+        color: #e6007e;
+        opacity: 1;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        max-width: none;
+      }
+      .meta .prompt {
+        color: #000;
+        white-space: normal;
+      }
+      body.no-scroll { overflow: hidden; }
+      .variant-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        padding: 10px 0 0;
+        flex-wrap: wrap;
+      }
+      .variant-actions .pill {
+        padding: 6px 10px;
+        font-size: 14.5px;
+        background: #e6007e;
+        color: #fff;
+        border: 1.5px solid #e6007e;
+        border-radius: 999px;
+        font-family: "GeistRegular", system-ui, sans-serif;
+        font-style: normal;
+      }
+      .variant-actions .pill:hover {
+        background: #e6007e;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <div class="featured" id="featured">
+          <div class="card placeholder-card">
+            <div class="img-wrap is-loading">
+              <canvas class="placeholder-sphere"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="scroll-hint">Scroll to view gallery</div>
+      </section>
+      <section class="gallery" id="gallery">
+        <div class="grid" id="grid"></div>
+      </section>
+    </main>
+    <div class="actions">
+      <button id="gen">Generate Hyperreality</button>
+    </div>
+    <div id="status" aria-live="polite"></div>
+    <div class="progress-row">
+      <div class="progress" id="progress"><div class="bar" id="progressBar"></div></div>
+      <div id="elapsed" class="elapsed-bubble"></div>
+    </div>
+    <div class="alert-banner" id="alertBanner">hyperreality is generated</div>
+    <script>
+      function apiGenerate(payload = {}) {
+        const runId = String(Date.now())
+        return fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ runId, ...payload })
+        }).then(r => r.json())
+      }
+
+      async function mutate(parent, mode) {
+        if (!parent) {
+          console.error("mutate ohne parent")
+          return
+        }
+
+        const totalSecs = 40
+        const startTime = Date.now()
+        let progressPos = -100
+        let progressDir = 1
+        const progressTick = () => {
+          progressPos += progressDir * 3
+          if (progressPos > 100) progressDir = -1
+          if (progressPos < -100) progressDir = 1
+          progressBar.style.transform = `translateX(${progressPos}%)`
+        }
+        progressRow.classList.add("active")
+        elapsed.classList.add("active")
+        elapsed.textContent = `${totalSecs}s`
+        showPlaceholder()
+        setPlaceholderAnimating(true)
+        const progressTimer = setInterval(progressTick, 60)
+        const elapsedTimer = setInterval(() => {
+          const secs = Math.floor((Date.now() - startTime) / 1000)
+          const remaining = Math.max(totalSecs - secs, 0)
+          elapsed.textContent = `${remaining}s`
+        }, 500)
+
+        try {
+          const res = await fetch("/api/mutate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ parent, mode })
+          })
+
+          const json = await res.json().catch(() => ({}))
+          if (!res.ok || !json.ok) {
+            console.error("mutate failed", json)
+          } else if (json.file && !imageFiles.includes(json.file)) {
+            addCard(json.file, { featured: true, replacePlaceholder: true })
+          }
+        } finally {
+          clearInterval(progressTimer)
+          clearInterval(elapsedTimer)
+          progressBar.style.transform = "translateX(-100%)"
+          elapsed.textContent = ""
+          elapsed.classList.remove("active")
+          progressRow.classList.remove("active")
+          setPlaceholderAnimating(false)
+        }
+      }
+
+      const grid = document.getElementById("grid")
+      const featured = document.getElementById("featured")
+      const progressRow = document.querySelector(".progress-row")
+      const elapsed = document.getElementById("elapsed")
+      const btn = document.getElementById("gen")
+      const status = document.getElementById("status")
+      const progress = document.getElementById("progress")
+      const progressBar = document.getElementById("progressBar")
+      const alertBanner = document.getElementById("alertBanner")
+      let imageFiles = []
+      let placeholderCard = null
+      let alertTimer = null
+      let isGenerating = false
+      let statusTimer = null
+
+      function prettyField(f) {
+        if (f === "gossip") return "gossip"
+        if (f === "places") return "place"
+        if (f === "people") return "people"
+        if (f === "atmosphere") return "atmosphere"
+        return f
+      }
+
+      function showMutationBanner(fields) {
+        const nice = (fields || []).map(prettyField).join(" + ")
+        status.textContent = `changed: ${nice}`
+        status.classList.add("active")
+        if (statusTimer) clearTimeout(statusTimer)
+        statusTimer = setTimeout(() => {
+          status.textContent = ""
+          status.classList.remove("active")
+        }, 10000)
+      }
+
+      function updateHeadlineWidth() {
+        const width = btn.getBoundingClientRect().width
+        document.documentElement.style.setProperty("--headline-width", `${Math.round(width)}px`)
+      }
+
+      function createCard(file) {
+        const card = document.createElement("div")
+        card.className = "card"
+
+        const imgWrap = document.createElement("div")
+        imgWrap.className = "img-wrap is-loading"
+
+        const img = document.createElement("img")
+        img.src = `/out/${encodeURIComponent(file)}?t=${Date.now()}`
+        img.style.cursor = "default"
+        img.addEventListener("load", () => {
+          imgWrap.classList.remove("is-loading")
+        })
+        img.addEventListener("error", () => {
+          imgWrap.classList.remove("is-loading")
+        })
+
+        const metaBox = document.createElement("div")
+        metaBox.className = "meta"
+        metaBox.textContent = ""
+
+        imgWrap.appendChild(img)
+        card.appendChild(imgWrap)
+        card.appendChild(metaBox)
+
+        const actions = document.createElement("div")
+        actions.className = "variant-actions"
+
+        const b1 = document.createElement("button")
+        b1.className = "pill"
+        b1.type = "button"
+        b1.textContent = "Echo 01"
+        b1.onclick = () => mutate(file, "pass")
+
+        const b2 = document.createElement("button")
+        b2.className = "pill"
+        b2.type = "button"
+        b2.textContent = "Echo 02"
+        b2.onclick = () => mutate(file, "distort")
+
+        const b3 = document.createElement("button")
+        b3.className = "pill"
+        b3.type = "button"
+        b3.textContent = "Echo 03"
+        b3.onclick = () => mutate(file, "drift")
+
+        actions.appendChild(b1)
+        actions.appendChild(b2)
+        actions.appendChild(b3)
+        card.appendChild(actions)
+
+        return { card, metaBox, img }
+      }
+
+      function showPlaceholder() {
+        placeholderCard = featured.querySelector(".placeholder-card") || null
+        if (!placeholderCard) return
+        placeholderCard.classList.remove("is-hidden")
+      }
+
+      function setPlaceholderAnimating(isAnimating) {
+        if (!placeholderCard) return
+        const wrap = placeholderCard.querySelector(".img-wrap")
+        if (!wrap) return
+        if (isAnimating) wrap.classList.add("is-animating")
+        else wrap.classList.remove("is-animating")
+      }
+
+      function initPlaceholderSphere() {
+        const canvas = document.querySelector(".placeholder-sphere")
+        if (!canvas) return
+        const ctx = canvas.getContext("2d")
+        if (!ctx) return
+
+        const syncSize = () => {
+          const dpr = window.devicePixelRatio || 1
+          const w = canvas.clientWidth
+          const h = canvas.clientHeight
+          if (!w || !h) return
+          const nextW = Math.round(w * dpr)
+          const nextH = Math.round(h * dpr)
+          if (canvas.width !== nextW || canvas.height !== nextH) {
+            canvas.width = nextW
+            canvas.height = nextH
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+          }
+        }
+        syncSize()
+        window.addEventListener("resize", syncSize)
+
+        let angle = 0
+        const render = () => {
+          const w = canvas.clientWidth
+          const h = canvas.clientHeight
+          if (!w || !h) {
+            requestAnimationFrame(render)
+            return
+          }
+          syncSize()
+          ctx.clearRect(0, 0, w, h)
+          const r = Math.min(w, h) * 0.26
+          const cx = w * 0.5
+          const cy = h * 0.5
+
+          // Base sphere
+          const grad = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.35, r * 0.2, cx, cy, r)
+          grad.addColorStop(0, "rgba(255,255,255,0.95)")
+          grad.addColorStop(0.6, "rgba(255,255,255,0.75)")
+          grad.addColorStop(1, "rgba(255,255,255,0.25)")
+          ctx.fillStyle = grad
+          ctx.beginPath()
+          ctx.arc(cx, cy, r, 0, Math.PI * 2)
+          ctx.fill()
+
+          // Rotating highlight ring around Z axis
+          ctx.save()
+          ctx.translate(cx, cy)
+          ctx.rotate(angle)
+          ctx.strokeStyle = "rgba(255,255,255,0.6)"
+          ctx.lineWidth = Math.max(1, r * 0.03)
+          ctx.beginPath()
+          ctx.ellipse(0, 0, r * 0.85, r * 0.35, 0, 0, Math.PI * 2)
+          ctx.stroke()
+          ctx.restore()
+
+          angle += 0.01
+          requestAnimationFrame(render)
+        }
+        render()
+      }
+
+      function hidePlaceholder() {
+        if (placeholderCard) placeholderCard.classList.add("is-hidden")
+      }
+
+      function showPlaceholderVisible() {
+        if (placeholderCard) placeholderCard.classList.remove("is-hidden")
+      }
+
+      function waitForImage(img) {
+        if (img.complete && img.naturalWidth) return Promise.resolve(true)
+        return new Promise(resolve => {
+          img.addEventListener("load", () => resolve(true), { once: true })
+          img.addEventListener("error", () => resolve(false), { once: true })
+        })
+      }
+
+      function isNineSixteen(img) {
+        const ratio = img.naturalWidth / img.naturalHeight
+        const target = 9 / 16
+        return Math.abs(ratio - target) <= 0.02
+      }
+
+      function updateImageList(file, isFeatured) {
+        if (!file) return
+        imageFiles = imageFiles.filter(f => f !== file)
+        if (isFeatured) {
+          imageFiles.unshift(file)
+        } else {
+          imageFiles.push(file)
+        }
+      }
+
+      async function loadMetaForImage(file) {
+        try {
+          const jsonFile = file
+            .replace(".png", ".json")
+            .replace(".jpg", ".json")
+            .replace(".jpeg", ".json")
+            .replace(".webp", ".json")
+          const r = await fetch(`/out/${encodeURIComponent(jsonFile)}?t=${Date.now()}`)
+          if (!r.ok) return null
+          return await r.json()
+        } catch {
+          return null
+        }
+      }
+
+      function renderMeta(meta, container) {
+        container.innerHTML = ""
+        if (!meta) return
+        if (meta.headline) {
+          const h = document.createElement("div")
+          h.className = "headline"
+          h.textContent = meta.headline
+          container.appendChild(h)
+        }
+        const lines = []
+        if (meta.gossip) lines.push(`gossip: ${meta.gossip}`)
+        if (meta.places) lines.push(`place: ${meta.places}`)
+        if (meta.atmosphere) lines.push(`atmosphere: ${meta.atmosphere}`)
+        if (meta.style) lines.push(`style: ${meta.style}`)
+        if (meta.people) lines.push(`people: ${meta.people}`)
+        if (lines.length) {
+          const p = document.createElement("div")
+          p.className = "prompt"
+          p.textContent = lines.join("\n")
+          container.appendChild(p)
+        }
+      }
+
+      async function addCard(file, opts = {}) {
+        const isFeatured = opts.featured === true
+        const replacePlaceholder = opts.replacePlaceholder === true
+        const { card, metaBox, img } = createCard(file)
+
+        const meta = await loadMetaForImage(file)
+        const prompts = []
+        if (meta?.places) prompts.push(meta.places)
+        if (meta?.people) prompts.push(meta.people)
+        if (meta?.atmosphere) prompts.push(meta.atmosphere)
+        if (meta?.gossip) prompts.push(meta.gossip)
+        if (meta?.style) prompts.push(meta.style)
+        // allow images even without headline
+
+        const loaded = await waitForImage(img)
+        if (!loaded || !isNineSixteen(img)) return false
+
+        updateImageList(file, isFeatured)
+
+        if (isFeatured) {
+          showPlaceholder()
+          const currentFeatured = placeholderCard ? placeholderCard.nextElementSibling : featured.firstElementChild
+          if (currentFeatured) grid.prepend(currentFeatured)
+          if (replacePlaceholder) {
+            hidePlaceholder()
+            if (placeholderCard) {
+              featured.insertBefore(card, placeholderCard.nextElementSibling)
+            } else {
+              featured.prepend(card)
+            }
+            setTimeout(() => {
+              card.classList.add("slide-out")
+              setTimeout(() => {
+                if (card.parentElement) grid.prepend(card)
+                card.classList.remove("slide-out")
+                showPlaceholderVisible()
+              }, 380)
+            }, 9000)
+          } else {
+            showPlaceholderVisible()
+            if (placeholderCard) {
+              featured.insertBefore(card, placeholderCard.nextElementSibling)
+            } else {
+              featured.prepend(card)
+            }
+          }
+        } else {
+          grid.prepend(card)
+        }
+
+        renderMeta(meta, metaBox)
+        return true
+      }
+
+      async function loadAll() {
+        const r = await fetch("/api/images")
+        const j = await r.json()
+        grid.innerHTML = ""
+        imageFiles = []
+        if (!j.images.length) return
+        for (let i = 0; i < j.images.length; i++) {
+          await addCard(j.images[i], { featured: false, replacePlaceholder: false })
+        }
+      }
+
+      btn.addEventListener("click", async () => {
+        if (isGenerating) return
+        status.textContent = ""
+        btn.disabled = true
+        btn.classList.add("is-loading")
+        isGenerating = true
+        const originalLabel = btn.textContent
+        btn.textContent = "Loading Hyperreality"
+        showPlaceholder()
+        setPlaceholderAnimating(true)
+        updateHeadlineWidth()
+        progressRow.classList.add("active")
+        elapsed.classList.add("active")
+        const totalSecs = 40
+        elapsed.textContent = `${totalSecs}s`
+        const startTime = Date.now()
+        let progressPos = -100
+        let progressDir = 1
+        const progressTick = () => {
+          progressPos += progressDir * 3
+          if (progressPos > 100) progressDir = -1
+          if (progressPos < -100) progressDir = 1
+          progressBar.style.transform = `translateX(${progressPos}%)`
+        }
+        const progressTimer = setInterval(progressTick, 60)
+        const elapsedTimer = setInterval(() => {
+          const secs = Math.floor((Date.now() - startTime) / 1000)
+          const remaining = Math.max(totalSecs - secs, 0)
+          elapsed.textContent = `${remaining}s`
+        }, 500)
+        await new Promise(r => requestAnimationFrame(r))
+        try {
+          const j = await apiGenerate()
+          if (!j.ok) throw new Error(j.error || "fehler")
+        } catch (e) {
+          status.textContent = "fehler"
+          console.error(e)
+        } finally {
+          btn.disabled = false
+          btn.classList.remove("is-loading")
+          btn.textContent = originalLabel
+          isGenerating = false
+          updateHeadlineWidth()
+          setPlaceholderAnimating(false)
+          clearInterval(progressTimer)
+          clearInterval(elapsedTimer)
+          progressBar.style.transform = "translateX(-100%)"
+          elapsed.textContent = ""
+          elapsed.classList.remove("active")
+          progressRow.classList.remove("active")
+          setTimeout(() => status.textContent = "", 1200)
+        }
+      })
+
+      function showAlertAndScroll() {
+        if (!alertBanner) return
+        alertBanner.classList.add("is-visible")
+        if (alertTimer) clearTimeout(alertTimer)
+        alertTimer = setTimeout(() => {
+          alertBanner.classList.remove("is-visible")
+          window.scrollTo({ top: 0, behavior: "smooth" })
+        }, 1000)
+      }
+
+      const es = new EventSource("/api/stream")
+      es.onmessage = ev => {
+        try {
+          const msg = JSON.parse(ev.data)
+
+          if (msg.type === "mutated") {
+            showMutationBanner(msg.mutationFields)
+          }
+          if (msg.type === "debug" && msg.stage === "mutated" && msg.data) {
+            showMutationBanner(msg.data.mutationFields)
+          }
+
+          if (msg.type === "new" && msg.file) {
+            if (!imageFiles.includes(msg.file)) {
+              addCard(msg.file, { featured: true, replacePlaceholder: true })
+            }
+            showAlertAndScroll()
+            // NEU: parent informieren
+          }
+
+          if (msg.type === "run_done") {
+            if (statusTimer) clearTimeout(statusTimer)
+            statusTimer = setTimeout(() => {
+              status.textContent = ""
+              status.classList.remove("active")
+            }, 10000)
+          }
+        } catch (e) {
+          console.error("SSE parse error", e, ev.data)
+        }
+      }
+
+      window.addEventListener("resize", updateHeadlineWidth)
+
+      updateHeadlineWidth()
+      initPlaceholderSphere()
+      showPlaceholder()
+      loadAll()
+    </script>
+  </body>
+</html>

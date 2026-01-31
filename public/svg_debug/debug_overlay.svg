@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <g id="Overlay_lines">
+    <line x1="76.48" y1="-81.8" x2="76.48" y2="1985.17" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <line x1="1626.08" y1="533.31" x2="-440.9" y2="533.31" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <line x1="1662.47" y1="568.15" x2="-404.5" y2="568.15" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <line x1="111.57" y1="533.35" x2="111.57" y2="2600.32" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <line x1="392.38" y1="-2.5" x2="392.38" y2="568.16" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <line x1="2178.72" y1="1627.51" x2="111.74" y2="1627.51" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <line x1="709.26" y1="-439.1" x2="709.26" y2="1627.87" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <line x1="845.54" y1="721.58" x2="268.77" y2="721.58" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <line x1="747.81" y1="533.55" x2="747.81" y2="721.27" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <line x1="147.79" y1="568.19" x2="147.79" y2="1627.6" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <line x1="112.34" y1="1588" x2="709.16" y2="1588" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <line x1="76.03" y1="44.98" x2="709.13" y2="44.98" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <line x1="1034.09" y1="-.33" x2="1034.09" y2="1629.22" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <line x1="747.81" y1="1098.13" x2="747.81" y2="1978.19" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <line x1="391.83" y1="434.3" x2="1090.77" y2="434.3" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <line x1="268.77" y1="1588.34" x2="268.77" y2="1938.01" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+  </g>
+  <g id="overlay_circle">
+    <circle cx="853.38" cy="721.63" r="13.06" fill="#fff" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <circle cx="147.5" cy="1362.84" r="13.06" fill="#fff" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <circle cx="76.6" cy="501.9" r="13.06" fill="#fff" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <circle cx="268.79" cy="1829.42" r="13.06" fill="#fff" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+  </g>
+</svg>

@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Galerie</title>
+  <style>
+    @font-face {
+      font-family: "RedactionItalic";
+      font-style: italic;
+      font-weight: 400;
+      src: url("./Redaction-Italic.otf") format("opentype");
+    }
+    @font-face {
+      font-family: "GeistRegular";
+      font-style: normal;
+      font-weight: 400;
+      src: url("./Geist-Regular.otf") format("opentype");
+    }
+    body { font-family: system-ui, -apple-system, Arial; margin: 18px; }
+    .intro {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "RedactionItalic", system-ui, -apple-system, Arial;
+      font-style: italic;
+      font-size: clamp(32px, 6vw, 96px);
+      letter-spacing: 0.02em;
+      color: #e6007e;
+      background: rgba(255, 255, 255, 0.9);
+      opacity: 0;
+      animation: intro-hold 5s ease-out forwards;
+      pointer-events: none;
+      z-index: 1000;
+    }
+    @keyframes intro-hold {
+      0% { opacity: 0; transform: translateY(6px); }
+      12% { opacity: 1; transform: translateY(0); }
+      88% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-4px); }
+    }
+    h1 { margin: 0; font-size: 20px; }
+    .top { display: flex; gap: 12px; align-items: baseline; }
+    .muted { opacity: 0.7; font-size: 13px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 14px; }
+    a { color: inherit; text-decoration: none; }
+    .card { border: 1px solid rgba(0,0,0,0.12); border-radius: 0; overflow: visible; background: white; }
+    .card img { width: 100%; height: 220px; object-fit: cover; display: block; background: #eee; }
+    .cap { padding: 8px 10px; font-size: 12px; opacity: 1; word-break: break-all; font-family: "GeistRegular", system-ui, -apple-system, Arial; color: #e6007e; text-align: left; line-height: 1.2; }
+    button { margin-top: 10px; padding: 8px 10px; border-radius: 999px; border: 1px solid #e6007e; background: white; cursor: pointer; font-family: "RedactionItalic", system-ui, -apple-system, Arial; font-style: italic; letter-spacing: 0; color: #e6007e; box-shadow: none; }
+    .actions { display: flex; gap: 8px; padding: 8px 10px 10px; flex-wrap: wrap; }
+    .actions button { margin-top: 0; padding: 6px 10px; font-size: 12px; }
+    .status { margin-left: 12px; font-size: 13px; opacity: 0.75; }
+  </style>
+</head>
+<body>
+  <div class="intro" aria-hidden="true">Synthetic Trust</div>
+  <div class="top">
+    <h1>Galerie</h1>
+    <div class="muted" id="count"></div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <button id="reload">Neu laden</button>
+
+  <div class="grid" id="grid"></div>
+
+  <script>
+    async function mutate(parent, mode) {
+      const status = document.getElementById("status");
+      status.textContent = "sending…";
+
+      const res = await fetch("/api/mutate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ parent, mode })
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.ok) {
+        status.textContent = "error: " + (json.error || res.statusText);
+        return;
+      }
+
+      status.textContent = "running…";
+    }
+
+    async function load() {
+      const grid = document.getElementById("grid");
+      const count = document.getElementById("count");
+      grid.innerHTML = "";
+      count.textContent = "laedt";
+
+      const res = await fetch("/api/images");
+      const data = await res.json();
+      const images = (data && data.images) ? data.images : [];
+
+      count.textContent = images.length + " bilder";
+
+      for (const item of images) {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const a = document.createElement("a");
+        a.href = item.url;
+        a.target = "_blank";
+
+        const img = document.createElement("img");
+        img.loading = "lazy";
+        img.src = item.url;
+
+        const cap = document.createElement("div");
+        cap.className = "cap";
+        cap.textContent = item.file;
+
+        a.appendChild(img);
+        card.appendChild(a);
+        card.appendChild(cap);
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const b1 = document.createElement("button");
+        b1.textContent = "Pass it on";
+        b1.onclick = (e) => { e.preventDefault(); mutate(item.file, "pass"); };
+
+        const b2 = document.createElement("button");
+        b2.textContent = "Distort";
+        b2.onclick = (e) => { e.preventDefault(); mutate(item.file, "distort"); };
+
+        const b3 = document.createElement("button");
+        b3.textContent = "Let it drift";
+        b3.onclick = (e) => { e.preventDefault(); mutate(item.file, "drift"); };
+
+        actions.appendChild(b1);
+        actions.appendChild(b2);
+        actions.appendChild(b3);
+        card.appendChild(actions);
+
+        grid.appendChild(card);
+      }
+    }
+
+    function connectStream() {
+      const status = document.getElementById("status");
+      const es = new EventSource("/api/stream");
+
+      es.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          if (msg.type === "run_start") status.textContent = "running…";
+          if (msg.type === "run_done") { status.textContent = "done"; load(); }
+          if (msg.type === "run_error") status.textContent = "error";
+          if (msg.type === "new") load();
+        } catch {}
+      };
+
+      es.onerror = () => { status.textContent = "stream lost"; };
+    }
+
+    document.getElementById("reload").addEventListener("click", load);
+    load();
+    connectStream();
+  </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Underlay_boxes_pink" xmlns="http://www.w3.org/2000/svg" width="951.44" height="1255.98" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 951.44 1255.98">
+  <defs>
+    <clipPath id="clippath">
+      <rect y="1176.95" width="951.44" height="79.04" fill="none"/>
+    </clipPath>
+    <clipPath id="clippath-1">
+      <rect x="2.89" y="0" width="928.48" height="980.62" fill="none"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#clippath)" fill="none">
+    <path d="m21.5,1176.95s0,12-21.5,12v55.04s21.5,0,21.5,12h908.44s0-12,21.5-12v-55.04s-21.5,0-21.5-12H21.5Z" fill="#e8308a"/>
+  </g>
+  <g clip-path="url(#clippath-1)" fill="none">
+    <path d="m931.36,60.99s-30.72-1.07-29.65-31.79L65.76,0s-1.07,30.72-31.79,29.65L2.89,919.63s30.72,1.07,29.65,31.79l835.96,29.19s1.07-30.72,31.79-29.65l31.08-889.98Z" fill="#e8308a"/>
+  </g>
+</svg>

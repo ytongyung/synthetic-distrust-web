@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1080 1920">
+  <defs>
+    <clipPath id="clippath">
+      <rect x="1026.73" y="-.72" width=".8" height="912.93" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </clipPath>
+    <clipPath id="clippath-1">
+      <rect x=".56" y="73.22" width="1079.44" height=".8" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </clipPath>
+    <clipPath id="clippath-2">
+      <rect x="30.05" y="76" width=".8" height="1844.7" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </clipPath>
+    <clipPath id="clippath-3">
+      <rect x="989.05" y="73.88" width=".8" height="1846.12" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </clipPath>
+    <clipPath id="clippath-4">
+      <rect x="988.17" y="912.69" width="91.83" height=".8" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </clipPath>
+    <clipPath id="clippath-5">
+      <rect x="30.78" y="1844.5" width="512.22" height=".8" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </clipPath>
+    <clipPath id="clippath-6">
+      <rect x="542.23" y="1684" width=".8" height="237.15" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </clipPath>
+    <clipPath id="clippath-7">
+      <rect x="30.75" y="519.63" width="959.25" height=".8" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </clipPath>
+    <clipPath id="clippath-8">
+      <rect x="60.93" y="1682.97" width="483.08" height=".8" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </clipPath>
+    <clipPath id="clippath-9">
+      <rect x="61" y="1828.42" width="930.79" height=".8" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </clipPath>
+    <clipPath id="clippath-10">
+      <rect x="966.71" y="1829" width="21" height="89.6" fill="none"/>
+    </clipPath>
+    <clipPath id="clippath-11">
+      <rect x="34.43" y="430.22" width="21" height="89.6" fill="none"/>
+    </clipPath>
+    <clipPath id="clippath-12">
+      <rect x="579" y="76" width="408.69" height="23.43" fill="none"/>
+    </clipPath>
+    <clipPath id="clippath-13">
+      <rect x="974.5" y="1294.86" width="28.98" height="28.98" fill="none"/>
+    </clipPath>
+    <clipPath id="clippath-14">
+      <rect x="70.56" y="1668.79" width="28.98" height="28.98" fill="none"/>
+    </clipPath>
+    <clipPath id="clippath-15">
+      <rect x="547.78" y="1814.31" width="28.98" height="28.98" fill="none"/>
+    </clipPath>
+    <clipPath id="clippath-16">
+      <rect x="578.61" y="1814.31" width="28.98" height="28.98" fill="none"/>
+    </clipPath>
+    <clipPath id="clippath-17">
+      <rect x="609.5" y="1814.48" width="28.98" height="28.98" fill="none"/>
+    </clipPath>
+    <clipPath id="clippath-18">
+      <rect x="544.49" y="58.92" width="28.98" height="28.98" fill="none"/>
+    </clipPath>
+  </defs>
+  <g id="overlay_lines">
+    <g>
+      <g clip-path="url(#clippath)" fill="none">
+        <line x1="1027.13" y1="912.21" x2="1027.13" y2="-.72" fill="none" stroke="#fff" stroke-width=".5"/>
+      </g>
+      <rect x="1026.73" y="-.72" width=".8" height="912.93" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </g>
+    <g>
+      <g clip-path="url(#clippath-1)" fill="none">
+        <line x1="1080" y1="73.62" x2=".56" y2="73.62" fill="none" stroke="#fff" stroke-width=".5"/>
+      </g>
+      <rect x=".56" y="73.22" width="1079.44" height=".8" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </g>
+    <g>
+      <g clip-path="url(#clippath-2)" fill="none">
+        <line x1="30.45" y1="1920.7" x2="30.45" y2="76" fill="none" stroke="#fff" stroke-width=".5"/>
+      </g>
+      <rect x="30.05" y="76" width=".8" height="1844.7" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </g>
+    <g>
+      <g clip-path="url(#clippath-3)" fill="none">
+        <line x1="989.45" y1="1920" x2="989.45" y2="73.88" fill="none" stroke="#fff" stroke-width=".5"/>
+      </g>
+      <rect x="989.05" y="73.88" width=".8" height="1846.12" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </g>
+    <g>
+      <g clip-path="url(#clippath-4)" fill="none">
+        <line x1="1080" y1="913.09" x2="988.17" y2="913.09" fill="none" stroke="#fff" stroke-width=".5"/>
+      </g>
+      <rect x="988.17" y="912.69" width="91.83" height=".8" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </g>
+    <g>
+      <g clip-path="url(#clippath-5)" fill="none">
+        <line x1="543" y1="1844.9" x2="30.78" y2="1844.9" fill="none" stroke="#fff" stroke-width=".5"/>
+      </g>
+      <rect x="30.78" y="1844.5" width="512.22" height=".8" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </g>
+    <g>
+      <g clip-path="url(#clippath-6)" fill="none">
+        <line x1="542.63" y1="1921.15" x2="542.63" y2="1684" fill="none" stroke="#fff" stroke-width=".5"/>
+      </g>
+      <rect x="542.23" y="1684" width=".8" height="237.15" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </g>
+    <g>
+      <g clip-path="url(#clippath-7)" fill="none">
+        <line x1="990" y1="520.03" x2="30.75" y2="520.03" fill="none" stroke="#fff" stroke-width=".5"/>
+      </g>
+      <rect x="30.75" y="519.63" width="959.25" height=".8" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </g>
+    <g>
+      <g clip-path="url(#clippath-8)" fill="none">
+        <line x1="544" y1="1683.37" x2="60.93" y2="1683.37" fill="none" stroke="#fff" stroke-width=".5"/>
+      </g>
+      <rect x="60.93" y="1682.97" width="483.08" height=".8" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </g>
+    <g>
+      <g clip-path="url(#clippath-9)" fill="none">
+        <line x1="991.79" y1="1828.82" x2="61" y2="1828.82" fill="none" stroke="#fff" stroke-width=".5"/>
+      </g>
+      <rect x="61" y="1828.42" width="930.79" height=".8" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".5"/>
+    </g>
+  </g>
+  <g id="overlay_circle">
+    <circle cx="528.5" cy="955.5" r="499" fill="none" stroke="#fff" stroke-miterlimit="10"/>
+  </g>
+  <g id="overlay_boxes">
+    <rect x="1027.34" y="534.54" width="29.49" height="378" fill="#1d1d1b"/>
+    <rect x="31.71" y="1659" width="29.49" height="184.6" fill="#1d1d1b"/>
+    <rect x="841.61" y="43.35" width="184.6" height="29.49" fill="#1d1d1b"/>
+  </g>
+  <g id="overlay_boxes_white">
+    <g clip-path="url(#clippath-10)" fill="none">
+      <polygon points="982.71 1829.14 971.71 1829.14 967.42 1829.14 967.42 1829.96 967.42 1917.65 967.42 1918.47 971.71 1918.47 982.71 1918.47 986.99 1918.47 986.99 1917.65 986.99 1829.96 986.99 1829.14 982.71 1829.14" fill="none" stroke="#fff" stroke-width="1.43"/>
+      <rect x="971.71" y="1829.96" width="11" height="87.69" fill="none" stroke="#fff" stroke-width="2.86"/>
+    </g>
+    <rect x="975.99" y="1830.77" width="2.43" height="86.06" fill="none" stroke="#fff" stroke-width="1.43"/>
+    <g clip-path="url(#clippath-11)" fill="none">
+      <polygon points="50.43 430.36 39.43 430.36 35.15 430.36 35.15 431.18 35.15 518.87 35.15 519.69 39.43 519.69 50.43 519.69 54.72 519.69 54.72 518.87 54.72 431.18 54.72 430.36 50.43 430.36" fill="none" stroke="#fff" stroke-width="1.43"/>
+      <rect x="39.43" y="431.18" width="11" height="87.69" fill="none" stroke="#fff" stroke-width="2.86"/>
+    </g>
+    <rect x="43.72" y="431.99" width="2.43" height="86.06" fill="none" stroke="#fff" stroke-width="1.43"/>
+    <g clip-path="url(#clippath-12)" fill="none">
+      <polygon points="579.62 81.58 579.62 93.86 579.62 98.64 583.36 98.64 983.33 98.64 987.07 98.64 987.07 93.86 987.07 81.58 987.07 76.8 983.33 76.8 583.36 76.8 579.62 76.8 579.62 81.58" fill="none" stroke="#fff" stroke-width="1.43"/>
+      <rect x="583.36" y="81.58" width="399.97" height="12.27" fill="none" stroke="#fff" stroke-width="2.86"/>
+    </g>
+    <rect x="587.09" y="86.36" width="392.51" height="2.71" fill="none" stroke="#fff" stroke-width="1.43"/>
+  </g>
+  <g id="overlay_dots">
+    <g clip-path="url(#clippath-13)" fill="none">
+      <path d="m988.99,1323.44c7.78,0,14.09-6.31,14.09-14.09s-6.31-14.09-14.09-14.09-14.09,6.31-14.09,14.09,6.31,14.09,14.09,14.09" fill="#e5007d"/>
+      <path d="m988.99,1323.44c7.78,0,14.09-6.31,14.09-14.09s-6.31-14.09-14.09-14.09-14.09,6.31-14.09,14.09,6.31,14.09,14.09,14.09Z" fill="none" stroke="#fff"/>
+    </g>
+    <g clip-path="url(#clippath-14)" fill="none">
+      <path d="m85.05,1697.37c7.78,0,14.09-6.31,14.09-14.09s-6.31-14.09-14.09-14.09-14.09,6.31-14.09,14.09,6.31,14.09,14.09,14.09" fill="#e5007d"/>
+      <path d="m85.05,1697.37c7.78,0,14.09-6.31,14.09-14.09s-6.31-14.09-14.09-14.09-14.09,6.31-14.09,14.09,6.31,14.09,14.09,14.09Z" fill="none" stroke="#fff"/>
+    </g>
+    <g clip-path="url(#clippath-15)" fill="none">
+      <path d="m562.27,1842.88c7.78,0,14.09-6.31,14.09-14.09s-6.31-14.09-14.09-14.09-14.09,6.31-14.09,14.09,6.31,14.09,14.09,14.09" fill="#e5007d"/>
+      <path d="m562.27,1842.88c7.78,0,14.09-6.31,14.09-14.09s-6.31-14.09-14.09-14.09-14.09,6.31-14.09,14.09,6.31,14.09,14.09,14.09Z" fill="none" stroke="#fff"/>
+    </g>
+    <g clip-path="url(#clippath-16)" fill="none">
+      <path d="m593.1,1842.88c7.78,0,14.09-6.31,14.09-14.09s-6.31-14.09-14.09-14.09-14.09,6.31-14.09,14.09,6.31,14.09,14.09,14.09" fill="#e5007d"/>
+      <path d="m593.1,1842.88c7.78,0,14.09-6.31,14.09-14.09s-6.31-14.09-14.09-14.09-14.09,6.31-14.09,14.09,6.31,14.09,14.09,14.09Z" fill="none" stroke="#fff"/>
+    </g>
+    <g clip-path="url(#clippath-17)" fill="none">
+      <path d="m623.99,1843.06c7.78,0,14.09-6.31,14.09-14.09s-6.31-14.09-14.09-14.09-14.09,6.31-14.09,14.09,6.31,14.09,14.09,14.09" fill="#e5007d"/>
+      <path d="m623.99,1843.06c7.78,0,14.09-6.31,14.09-14.09s-6.31-14.09-14.09-14.09-14.09,6.31-14.09,14.09,6.31,14.09,14.09,14.09Z" fill="none" stroke="#fff"/>
+    </g>
+    <g clip-path="url(#clippath-18)" fill="none">
+      <path d="m558.98,87.5c7.78,0,14.09-6.31,14.09-14.09s-6.31-14.09-14.09-14.09-14.09,6.31-14.09,14.09,6.31,14.09,14.09,14.09" fill="#e5007d"/>
+      <path d="m558.98,87.5c7.78,0,14.09-6.31,14.09-14.09s-6.31-14.09-14.09-14.09-14.09,6.31-14.09,14.09,6.31,14.09,14.09,14.09Z" fill="none" stroke="#fff"/>
+    </g>
+  </g>
+</svg>

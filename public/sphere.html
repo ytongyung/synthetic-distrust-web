@@ -1,0 +1,1051 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sphere</title>
+    <style>
+      @font-face {
+        font-family: "RedactionItalic";
+        font-style: italic;
+        font-weight: 400;
+        src: url("./fonts/Redaction-Italic.otf") format("opentype");
+      }
+      @font-face {
+        font-family: "GeistRegular";
+        font-style: normal;
+        font-weight: 400;
+        src: url("./fonts/Geist-Regular.otf") format("opentype");
+      }
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
+      canvas { width: 100%; height: 100%; display: block; }
+      #sphereUnderlay{
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+      }
+      #sphereUnderlay img{
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        width: 100vw;
+        height: 100vh;
+        object-fit: contain;
+        display: block;
+      }
+      /* sorgt dafür, dass das inline <svg> wie vorher das <img> “contain” macht */
+      #underlayMount,
+      #underlayMount svg{
+        position: absolute;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        display: block;
+      }
+
+      /* wichtig: strokes müssen sichtbar sein */
+      #underlayMount svg *{
+        vector-effect: non-scaling-stroke; /* optional, sieht oft besser aus */
+      }
+
+      /* das ist die eigentliche Linien-Animation (wie in deinem debug-Setup vorbereitet) */
+      .draw-loop{
+        stroke-dasharray: var(--minLen) var(--restMin);
+        stroke-dashoffset: 0;
+        animation: drawLoop var(--dur, 6s) linear var(--delay, 0s) infinite alternate;
+      }
+      :root{
+        --overlayStroke: #e5007d;
+        --lineWidth: 2px;
+      }
+      .draw-classic{
+        stroke: var(--overlayStroke);
+        stroke-width: var(--lineWidth);
+        opacity: 1;
+        fill: none;
+        stroke-dasharray: var(--len);
+        stroke-dashoffset: var(--len);
+        animation: drawClassic var(--dur, 5s) linear var(--delay, 0s) infinite alternate;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      @keyframes drawLoop{
+        0%{
+          stroke-dasharray: var(--minLen) var(--restMin);
+          stroke-dashoffset: 0;
+          opacity: 1;
+        }
+        100%{
+          stroke-dasharray: var(--maxLen) var(--restMax);
+          stroke-dashoffset: -12; /* kleiner Drift, kann auch 0 sein */
+          opacity: 1;
+        }
+      }
+      @keyframes drawClassic{
+        0%   { stroke-dashoffset: var(--len); opacity: 1; }
+        100% { stroke-dashoffset: 0; opacity: 1; }
+      }
+
+      .promptOverlay{
+        position: fixed;
+        left: 20px;
+        top: 72px;
+        display: none;
+        z-index: 3000;
+        pointer-events: none;
+      }
+      .promptOverlay.isOpen{ display:block; }
+      .promptLabel{
+        font-family: "RedactionItalic", system-ui, -apple-system, Arial;
+        font-size: 16px;
+      }
+      .promptBody{
+        font-family: "GeistRegular", system-ui, -apple-system, Arial;
+        font-size: 16px;
+      }
+      .promptText{
+        max-width: 900px;
+        padding: 12px 14px;
+        color: #e6007e;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        font-family: "GeistRegular", system-ui, -apple-system, Arial;
+        font-size: 16px;
+        line-height: 1.35;
+        white-space: pre-wrap;
+      }
+
+      .loadingBtn{
+        position: fixed;
+        left: -15px;
+        top: -40px;
+        z-index: 3000;
+        display: none;
+        padding: 0;
+        border-radius: 999px;
+        border: none;
+        background: transparent;
+        pointer-events: none;
+      }
+      .loadingBtn.isActive{ display: none; }
+      .loadingBtn img{
+        display: block;
+        height: 156px;
+        width: auto;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div id="sphereUnderlay" aria-hidden="true">
+      <div id="underlayMount"></div>
+    </div>
+    <button id="loadingBtn" class="loadingBtn" type="button" aria-label="Loading Hyperreality">
+      <img src="./svg_sphere/Button_loadingehyperreality.svg" alt="" />
+    </button>
+    <div id="promptOverlay" class="promptOverlay" aria-hidden="true">
+      <div id="promptText" class="promptText"></div>
+    </div>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+    </script>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.setClearAlpha(0);
+      document.body.appendChild(renderer.domElement);
+      renderer.domElement.style.position = "fixed";
+      renderer.domElement.style.inset = "0";
+      renderer.domElement.style.width = "100vw";
+      renderer.domElement.style.height = "100vh";
+      renderer.domElement.style.zIndex = "1";
+
+      const scene = new THREE.Scene();
+      scene.background = null;
+      renderer.setClearColor(0x000000, 0);
+
+      const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 10000);
+      camera.near = 0.1;
+      camera.far = 500;
+      camera.updateProjectionMatrix();
+      camera.position.set(3, 2, 3);
+
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      const loadingBtn = document.getElementById("loadingBtn");
+      let generatedCount = 0;
+      const revealBuckets = new Map(); // key: number (1,4,7), value: array of objects
+
+      initUnderlaySvg();
+
+      async function initUnderlaySvg() {
+        const mount = document.getElementById("underlayMount");
+        if (!mount) return;
+
+        const url = "./svg_sphere/sphere_underlay.svg";
+        let svgText;
+
+        try {
+          const r = await fetch(url);
+          if (!r.ok) throw new Error(`fetch failed: ${r.status}`);
+          svgText = await r.text();
+        } catch (e) {
+          console.error("Underlay SVG konnte nicht geladen werden:", e);
+          return;
+        }
+
+        mount.innerHTML = svgText;
+
+        const svg = mount.querySelector("svg");
+        if (!svg) {
+          console.warn("Kein <svg> im geladenen Text gefunden.");
+          return;
+        }
+
+        prepareDrawClassic(svg);
+      }
+
+      function isRenderable(el) {
+        if (el.closest("defs, clipPath, mask, pattern, marker, symbol")) return false;
+
+        const cs = getComputedStyle(el);
+        if (cs.display === "none" || cs.visibility === "hidden" || Number(cs.opacity) === 0) return false;
+        if (!cs.stroke || cs.stroke === "none") return false;
+
+        try { el.getBBox(); } catch { return false; }
+        return true;
+      }
+
+      function prepareDrawClassic(svg) {
+        // 1) Linien-Gruppe aus DEINEM SVG:
+        let els = svg.querySelectorAll("#underlay_lines line, #underlay_lines path, #underlay_lines polyline");
+
+        // Fallback, falls mal IDs anders sind:
+        if (!els.length) els = svg.querySelectorAll("line, path, polyline");
+
+        els = Array.from(els).filter(el => typeof el.getTotalLength === "function");
+
+        const circle = svg.querySelector("#underlay_circle circle");
+        const circleStroke = circle ? circle.getAttribute("stroke") : null;
+        const circleStrokeWidth = circle ? circle.getAttribute("stroke-width") : null;
+
+        const baseDur = 6.5;
+        const stagger = 0.20;
+
+        els.forEach((el, i) => {
+          const len = el.getTotalLength();
+          if (!isFinite(len) || len <= 0) return;
+
+          el.classList.add("draw-classic");
+          if (circleStroke) el.style.stroke = circleStroke;
+          if (circleStrokeWidth) el.style.strokeWidth = circleStrokeWidth;
+
+          const dur = baseDur + (i % 6) * 0.8 + Math.random() * 3.0;
+          const delay = -(i * stagger + Math.random() * 1.6);
+
+          el.style.setProperty("--len", `${len}`);
+          el.style.setProperty("--dur", `${dur}s`);
+          el.style.setProperty("--delay", `${delay}s`);
+        });
+
+        console.log("Classic draw: animierte Lines:", els.length);
+      }
+
+      function parseRevealAt(name) {
+        // match: REVEAL_4_...  -> 4
+        const m = /^REVEAL_(\d+)_/i.exec(name || "");
+        return m ? Number(m[1]) : null;
+      }
+
+      function revealForCount(n) {
+        const arr = revealBuckets.get(n);
+        if (!arr || !arr.length) return;
+
+        for (const obj of arr) {
+          obj.visible = true;
+
+          // Optional: wenn Parent hidden war, auch Parent aktivieren
+          let p = obj.parent;
+          while (p) { p.visible = true; p = p.parent; }
+        }
+      }
+      let zoomRange = null;
+      let pendingZoom = null;
+      let camAnim = null;
+      let initialCamPos = null;
+      let initialTarget = null;
+      let panClampMinY = null;
+      let panClampMaxY = null;
+
+      function easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+
+      function animateCameraTo({ pos, target, duration = 950, followMesh = null } = {}) {
+        const startPos = camera.position.clone();
+        const startTarget = controls.target.clone();
+        const startTime = performance.now();
+        camAnim = {
+          startTime,
+          duration,
+          startPos,
+          startTarget,
+          endPos: pos?.clone?.() || null,
+          endTarget: target?.clone?.() || null,
+          followMesh
+        };
+      }
+
+      function orbitCameraAroundTarget(dx, dy) {
+        // dx/dy sind kleine Werte (z.B. -0.05..0.05)
+        const target = controls.target.clone();
+
+        // Kamera relativ zum Target
+        const offset = camera.position.clone().sub(target);
+
+        // Spherical Koordinaten
+        const spherical = new THREE.Spherical();
+        spherical.setFromVector3(offset);
+
+        // dx = links/rechts (theta), dy = hoch/runter (phi)
+        spherical.theta -= dx;
+        spherical.phi += dy;
+
+        // Clamp phi, damit man nicht flippt
+        const EPS = 0.0001;
+        spherical.phi = Math.max(EPS, Math.min(Math.PI - EPS, spherical.phi));
+
+        // Zurück auf Cartesian
+        offset.setFromSpherical(spherical);
+
+        // Kamera zurücksetzen
+        camera.position.copy(target.clone().add(offset));
+        camera.lookAt(target);
+      }
+
+      function panCameraVertical(dy) {
+        const amount = Number(dy) || 0;
+        if (!amount) return;
+        const PAN_SPEED = 0.9;
+        const rawDeltaY = amount * PAN_SPEED;
+        const currentTargetY = controls.target.y;
+        let nextTargetY = currentTargetY + rawDeltaY;
+        if (Number.isFinite(panClampMinY) && Number.isFinite(panClampMaxY)) {
+          nextTargetY = Math.max(panClampMinY, Math.min(panClampMaxY, nextTargetY));
+        }
+        const deltaY = nextTargetY - currentTargetY;
+        if (Math.abs(deltaY) < 1e-6) return;
+        const panOffset = new THREE.Vector3(0, deltaY, 0);
+        camera.position.add(panOffset);
+        controls.target.add(panOffset);
+      }
+
+      function setCameraDistance(dist) {
+        const target = controls.target.clone();
+        const offset = camera.position.clone().sub(target);
+        if (offset.lengthSq() < 1e-8) offset.set(0, 0, 1);
+        offset.normalize().multiplyScalar(dist);
+        camera.position.copy(target.add(offset));
+        controls.update();
+      }
+
+      function applyZoomNormalized(z) {
+        if (!zoomRange) {
+          pendingZoom = z;
+          return;
+        }
+        const clamped = Math.max(0, Math.min(1, Number(z) || 0));
+        const dist = zoomRange.max - (zoomRange.max - zoomRange.min) * clamped;
+        console.log("zoom", { z, clamped, dist, range: zoomRange });
+        setCameraDistance(dist);
+      }
+
+      const _tmpQ = new THREE.Quaternion();
+      const _tmpP = new THREE.Vector3();
+      const _tmpS = new THREE.Vector3();
+      const _n = new THREE.Vector3();
+      const _camSide = new THREE.Vector3();
+      const _tmpV0 = new THREE.Vector3();
+      const _tmpV1 = new THREE.Vector3();
+      const _tmpV2 = new THREE.Vector3();
+      const _normalMatrix = new THREE.Matrix3();
+
+      function getScreenWorldCenter(mesh) {
+        // nutzt NUR mesh.geometry (keine Kinder)
+        return getMeshWorldCenter(mesh).clone();
+      }
+
+      function getScreenWorldSize(mesh) {
+        const geo = mesh.geometry;
+        if (!geo) return new THREE.Vector2(1, 1);
+
+        if (!geo.boundingBox) geo.computeBoundingBox();
+        const size = new THREE.Vector3();
+        geo.boundingBox.getSize(size);
+
+        // World-Scale rein
+        const ws = new THREE.Vector3();
+        mesh.getWorldScale(ws);
+        size.set(Math.abs(size.x * ws.x), Math.abs(size.y * ws.y), Math.abs(size.z * ws.z));
+
+        // kleinste Achse ist "Dicke" -> wegwerfen, die anderen 2 sind width/height
+        const dims = [size.x, size.y, size.z].sort((a, b) => a - b);
+        const w = dims[1] || 1;
+        const h = dims[2] || 1;
+        return new THREE.Vector2(w, h);
+      }
+
+      function getScreenWorldNormal(mesh) {
+        const geo = mesh.geometry;
+        if (!geo?.attributes?.position || geo.attributes.position.count < 3) {
+          // Fallback: use local +Z
+          mesh.matrixWorld.decompose(_tmpP, _tmpQ, _tmpS);
+          return _n.set(0, 0, 1).applyQuaternion(_tmpQ).normalize();
+        }
+
+        const pos = geo.attributes.position;
+        _tmpV0.fromBufferAttribute(pos, 0);
+        _tmpV1.fromBufferAttribute(pos, 1);
+        _tmpV2.fromBufferAttribute(pos, 2);
+        _n.copy(_tmpV1).sub(_tmpV0).cross(_tmpV2.clone().sub(_tmpV0)).normalize();
+
+        _normalMatrix.getNormalMatrix(mesh.matrixWorld);
+        _n.applyMatrix3(_normalMatrix).normalize();
+        return _n;
+      }
+
+      function zoomToScreenFront(mesh, { padding = 1.55, duration = 1800, followMesh = null } = {}) {
+        if (!mesh) return;
+
+        mesh.updateWorldMatrix(true, false);
+
+        // Center NUR vom Screen
+        const center = getMeshWorldCenter(mesh).clone();
+
+        // Normal aus Geometrie (robuster als Annahme +Z)
+        const normal = getScreenWorldNormal(mesh);
+
+        // flip: Normale soll zur Kamera zeigen
+        _camSide.copy(camera.position).sub(center).normalize();
+        if (normal.dot(_camSide) < 0) normal.multiplyScalar(-1);
+
+        // Fit-Dist NUR anhand Screen-W/H (nicht Frame)
+        const wh = getScreenWorldSize(mesh);
+        const maxDim = Math.max(wh.x, wh.y);
+        const fov = camera.fov * Math.PI / 180;
+        const fitDist = (maxDim * 0.5) / Math.tan(fov * 0.5);
+        const dist = Math.max(fitDist * padding, 0.8);
+
+        const newPos = center.clone().add(normal.clone().multiplyScalar(dist));
+
+        // wichtig: followMesh darf gerne SCREEN sein (Center bleibt stabil),
+        // aber NICHT ein Parent/Group
+        inputLockUntil = performance.now() + duration + 120; // 120ms nach Ende
+        animateCameraTo({ pos: newPos, target: center, duration, followMesh: followMesh || mesh });
+      }
+
+      // --- Installation: listen to server events (SSE) ---
+      const es = new EventSource("/api/stream");
+      let zoomReturnTimer = null;
+      const ZOOM_DURATION_MS = 2000;
+      const NEW_DISPLAY_MS = 9000;
+      let orbitInputDX = 0;
+      let orbitInputDY = 0;
+      let orbitVelDX = 0;
+      let orbitVelDY = 0;
+      let panInput = 0;
+      let panVel = 0;
+      let revealLock = 0;
+      let inputLockUntil = 0;
+      const ORBIT_SPEED = 0.06;
+      const ORBIT_SMOOTH = 0.18;
+      const PAN_SMOOTH = 0.22;
+
+      function beginRevealLock() {
+        revealLock++;
+        // Input & Velocities sofort auf 0, damit nix reinfunkt
+        orbitInputDX = 0; orbitInputDY = 0; panInput = 0;
+        orbitVelDX = 0; orbitVelDY = 0; panVel = 0;
+
+        // OrbitControls: keine User-Inputs, kein Damping
+        controls.enabled = false;
+        controls.enableDamping = false;
+      }
+
+      function endRevealLock() {
+        revealLock = Math.max(0, revealLock - 1);
+        if (revealLock === 0) {
+          controls.enabled = true;
+          controls.enableDamping = true;
+        }
+      }
+
+      es.onmessage = async (ev) => {
+        let msg;
+        try { msg = JSON.parse(ev.data); } catch { return; }
+
+        if (msg?.type === "run_start") {
+          loadingBtn.classList.add("isActive");
+        }
+        if (msg?.type === "run_done" || msg?.type === "run_error") {
+          loadingBtn.classList.remove("isActive");
+        }
+
+        // 1) Neues Bild fertig -> in Sphere mappen + Reveal
+        if (msg?.type === "run_done" && msg.file) {
+          generatedCount++;
+          const mesh = applyImageToNextScreen(msg.file);
+          revealForCount(generatedCount);
+          if (mesh) {
+            if (zoomReturnTimer) {
+              clearTimeout(zoomReturnTimer);
+              zoomReturnTimer = null;
+            }
+            const restorePos = camera.position.clone();
+            const restoreTarget = controls.target.clone();
+            beginRevealLock();
+
+            // Mini-Schutz gegen Restbewegung
+            orbitVelDX = 0;
+            orbitVelDY = 0;
+            panVel = 0;
+            orbitInputDX = 0;
+            orbitInputDY = 0;
+            panInput = 0;
+
+            zoomToScreenFront(mesh, { duration: ZOOM_DURATION_MS, followMesh: mesh });
+            const baseTs = typeof msg.ts === "number" ? msg.ts : Date.now();
+            const remaining = Math.max(0, baseTs + NEW_DISPLAY_MS - Date.now());
+            zoomReturnTimer = setTimeout(() => {
+              animateCameraTo({ pos: restorePos, target: restoreTarget, duration: 1400 });
+              // Lock erst NACH Rückfahrt lösen
+              setTimeout(() => endRevealLock(), 1400);
+            }, remaining);
+          }
+        }
+
+        // 2) iPad Joystick -> Kamera bewegen
+        if (msg?.type === "control_orbit") {
+          orbitInputDX = (Number(msg.dx) || 0) * ORBIT_SPEED;
+          orbitInputDY = (Number(msg.dy) || 0) * ORBIT_SPEED;
+        }
+
+        if (msg?.type === "control_zoom") {
+          console.log("control_zoom", msg.zoom);
+          applyZoomNormalized(msg.zoom);
+        }
+
+        if (msg?.type === "control_pan") {
+          panInput = Number(msg.dy) || 0;
+        }
+
+        if (msg?.type === "control_reset") {
+          orbitInputDX = 0;
+          orbitInputDY = 0;
+          panInput = 0;
+          if (initialCamPos && initialTarget) {
+            animateCameraTo({ pos: initialCamPos, target: initialTarget, duration: 900 });
+          }
+        }
+      };
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+      const dir = new THREE.DirectionalLight(0xffffff, 1.0);
+      dir.position.set(5, 10, 5);
+      scene.add(dir);
+
+      const clock = new THREE.Clock();
+      let mixer;
+
+      const loader = new GLTFLoader();
+      const screens = [];
+      const framesByIndex = new Map(); // idx -> mesh
+      const backsByIndex  = new Map(); // idx -> mesh
+      let nextScreenIdx = 0;
+
+      function parseIndexedName(name, prefix) {
+        const m = new RegExp(`^${prefix}_(\\d+)`, "i").exec(name || "");
+        return m ? Number(m[1]) : null;
+      }
+
+      function parseScreenIndex(name) {
+        return parseIndexedName(name, "SCREEN");
+      }
+
+      function getScreenAspect(mesh) {
+        const geo = mesh.geometry;
+        if (!geo) return 1;
+
+        if (!geo.boundingBox) geo.computeBoundingBox();
+        const size = new THREE.Vector3();
+        geo.boundingBox.getSize(size);
+
+        // World-Scale reinmultiplizieren (wichtig bei Parent-Scaling / non-uniform scale)
+        const ws = new THREE.Vector3();
+        mesh.getWorldScale(ws);
+        const sx = Math.abs(size.x * ws.x);
+        const sy = Math.abs(size.y * ws.y);
+        const sz = Math.abs(size.z * ws.z);
+
+        // Kleinste Achse = Dicke/Normal -> rauswerfen
+        const dims = [
+          { axis: "x", v: sx },
+          { axis: "y", v: sy },
+          { axis: "z", v: sz },
+        ].sort((a, b) => a.v - b.v);
+
+        const a = dims[1]?.v || 1;
+        const b = dims[2]?.v || 1;
+        return a / b;
+      }
+
+      function loadImageElement(url) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = url;
+        });
+      }
+
+      async function loadMetaForImage(file) {
+        try {
+          const jsonFile = file
+            .replace(".png", ".json")
+            .replace(".jpg", ".json")
+            .replace(".jpeg", ".json")
+            .replace(".webp", ".json");
+
+          const r = await fetch(`/out/${encodeURIComponent(jsonFile)}?t=${Date.now()}`);
+          if (!r.ok) return null;
+          return await r.json();
+        } catch {
+          return null;
+        }
+      }
+
+      function ensureBackMesh(mesh) {
+        if (mesh.userData.isBack) return;
+        if (mesh.userData.backMesh) return;
+        const backMat = new THREE.MeshBasicMaterial({
+          color: 0xe6007e,
+          side: THREE.BackSide,
+          toneMapped: false
+        });
+        const backMesh = new THREE.Mesh(mesh.geometry, backMat);
+        backMesh.name = `${mesh.name}_BACK`;
+        backMesh.userData.isBack = true;
+        mesh.add(backMesh);
+        mesh.userData.backMesh = backMesh;
+      }
+
+      function makeContainedCanvasTexture(img, targetAspect, { bg = "rgba(0,0,0,0)", maxSize = 2048 } = {}) {
+        const srcW = img.width;
+        const srcH = img.height;
+
+        // Canvas so wählen, dass targetAspect stimmt
+        let cw, ch;
+        if (targetAspect >= 1) {
+          // Landscape Screen
+          cw = maxSize;
+          ch = Math.round(maxSize / targetAspect);
+        } else {
+          // Portrait Screen
+          ch = maxSize;
+          cw = Math.round(maxSize * targetAspect);
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = cw;
+        canvas.height = ch;
+
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, cw, ch);
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, cw, ch);
+
+        // contain
+        const scale = Math.min(cw / srcW, ch / srcH);
+        const dw = Math.round(srcW * scale);
+        const dh = Math.round(srcH * scale);
+        const dx = Math.floor((cw - dw) / 2);
+        const dy = Math.floor((ch - dh) / 2);
+
+        ctx.drawImage(img, dx, dy, dw, dh);
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+        // Flip vertically
+        tex.repeat.y = -1;
+        tex.offset.y = 1;
+        tex.needsUpdate = true;
+        return tex;
+      }
+
+      const _localCenter = new THREE.Vector3();
+      const _worldCenter = new THREE.Vector3();
+      function getMeshWorldCenter(mesh) {
+        if (!mesh?.geometry) return mesh?.getWorldPosition(_worldCenter) || _worldCenter;
+
+        // lokalen Center nur 1x aus boundingBox bestimmen
+        if (!mesh.userData._localGeoCenter) {
+          const geo = mesh.geometry;
+          const posAttr = geo.attributes?.position;
+          if (posAttr && posAttr.count > 0) {
+            _localCenter.set(0, 0, 0);
+            const v = new THREE.Vector3();
+            for (let i = 0; i < posAttr.count; i++) {
+              v.fromBufferAttribute(posAttr, i);
+              _localCenter.add(v);
+            }
+            _localCenter.multiplyScalar(1 / posAttr.count);
+            mesh.userData._localGeoCenter = _localCenter.clone();
+          } else {
+            if (!geo.boundingBox) geo.computeBoundingBox();
+            geo.boundingBox.getCenter(_localCenter);
+            mesh.userData._localGeoCenter = _localCenter.clone();
+          }
+        }
+
+        // lokalen Center in World space transformieren
+        _worldCenter.copy(mesh.userData._localGeoCenter);
+        mesh.updateWorldMatrix(true, false);
+        return mesh.localToWorld(_worldCenter);
+      }
+
+      function setVisibleWithParents(obj, v) {
+        if (!obj) return;
+        obj.visible = v;
+        let p = obj.parent;
+        while (p) { p.visible = v; p = p.parent; }
+      }
+
+      function applyImageToSpecificScreen(file, mesh) {
+        if (!mesh) return;
+        const idx = parseIndexedName(mesh.name, "SCREEN");
+
+        // Screen + Frame + Back sichtbar machen
+        setVisibleWithParents(mesh, true);
+        if (idx !== null) {
+          setVisibleWithParents(framesByIndex.get(idx), true);
+          setVisibleWithParents(backsByIndex.get(idx), true);
+        }
+
+        // cache
+        mesh.userData.file = file;
+        mesh.userData.meta = null;
+
+        if (typeof file !== "string" || !/\.(png|jpe?g|webp)$/i.test(file)) {
+          console.warn("Ungultiger Dateiname (erwarte .png/.jpg/.webp):", file);
+          return;
+        }
+
+        const url = `/out/${encodeURIComponent(file)}?t=${Date.now()}`;
+
+        loadImageElement(url).then((img) => {
+          const planeAspect = getScreenAspect(mesh);
+          const tex = makeContainedCanvasTexture(img, planeAspect, {
+            bg: "rgba(0,0,0,0)",
+            rotate90: false
+          });
+
+          const screenMaterial = new THREE.MeshBasicMaterial({
+            map: tex,
+            toneMapped: false,
+            side: THREE.FrontSide
+          });
+          screenMaterial.transparent = false;
+          screenMaterial.depthTest = true;
+          screenMaterial.depthWrite = true;
+          mesh.renderOrder = 0;
+          mesh.material = screenMaterial;
+          mesh.material.needsUpdate = true;
+        }).catch((e) => {
+          console.warn("Image load failed:", file, e);
+        });
+      }
+
+      function applyImageToNextScreen(file) {
+        if (!screens.length) {
+          console.warn("Keine Screens gefunden.");
+          return null;
+        }
+        const mesh = screens[nextScreenIdx % screens.length];
+        nextScreenIdx++;
+        applyImageToSpecificScreen(file, mesh);
+        return mesh;
+      }
+
+      loader.load(
+        "./scene.glb",
+        gltf => {
+          const root = gltf.scene;
+          scene.add(root);
+
+          // hide screens/frames/backs by default
+          root.traverse((obj) => {
+            if (typeof obj.name === "string") {
+              if (/^SCREEN_/i.test(obj.name) || /^FRAME_/i.test(obj.name) || /^BACK_/i.test(obj.name)) {
+                obj.visible = false;
+              }
+            }
+
+            // NEW: hide reveal-objects by default and bucket them by reveal step
+            const at = parseRevealAt(obj.name);
+            if (at !== null) {
+              obj.visible = false;
+              if (!revealBuckets.has(at)) revealBuckets.set(at, []);
+              revealBuckets.get(at).push(obj);
+            }
+          });
+
+          screens.length = 0;
+          framesByIndex.clear();
+          backsByIndex.clear();
+          root.traverse((obj) => {
+            if (!obj.isMesh || typeof obj.name !== "string") return;
+
+            // SCREEN
+            if (!obj.userData?.isBack && /^SCREEN_/i.test(obj.name)) {
+              if (obj.material) {
+                obj.material.side = THREE.FrontSide;
+                obj.material.needsUpdate = true;
+              }
+              // NOTE: when BACK_XX meshes exist, avoid ensureBackMesh to prevent duplicates.
+              screens.push(obj);
+              return;
+            }
+
+            // FRAME
+            if (/^FRAME_/i.test(obj.name)) {
+              const idx = parseIndexedName(obj.name, "FRAME");
+              if (idx !== null) framesByIndex.set(idx, obj);
+              return;
+            }
+
+            // BACK
+            if (/^BACK_/i.test(obj.name)) {
+              const idx = parseIndexedName(obj.name, "BACK");
+              if (idx !== null) backsByIndex.set(idx, obj);
+              return;
+            }
+          });
+          screens.sort((a, b) => {
+            const ai = parseScreenIndex(a.name);
+            const bi = parseScreenIndex(b.name);
+            if (ai !== null && bi !== null) return ai - bi;
+            return a.name.localeCompare(b.name);
+          });
+          console.log("screens:", screens.map(s => s.name));
+          console.log("frames:", Array.from(framesByIndex.entries()));
+          console.log("backs:", Array.from(backsByIndex.entries()));
+
+          mixer = new THREE.AnimationMixer(root);
+          gltf.animations.forEach(clip => {
+            const action = mixer.clipAction(clip);
+            action.reset();
+            action.play();
+          });
+
+          const MODEL_SCALE = 10;
+          root.scale.setScalar(MODEL_SCALE);
+          root.updateWorldMatrix(true, true);
+
+          const box = new THREE.Box3().setFromObject(root);
+          const size = box.getSize(new THREE.Vector3());
+          const center = box.getCenter(new THREE.Vector3());
+          root.position.sub(center);
+
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const fov = camera.fov * (Math.PI / 180);
+          let dist = maxDim / (2 * Math.tan(fov / 2));
+          dist *= 0.1;
+          dist += 35;
+
+          const offsetX = -size.x * 0.35;
+          root.position.x += offsetX;
+
+          // Recompute bounds after centering/offset and clamp vertical pan so
+          // the model cannot fully leave the view (~35% stays visible).
+          const positionedBox = new THREE.Box3().setFromObject(root);
+          const positionedSize = positionedBox.getSize(new THREE.Vector3());
+          const positionedMin = positionedBox.min;
+          const positionedMax = positionedBox.max;
+          const minVisibleFrac = 0.35;
+          const yMargin = positionedSize.y * minVisibleFrac;
+          panClampMinY = positionedMin.y + yMargin;
+          panClampMaxY = positionedMax.y - yMargin;
+          if (panClampMinY > panClampMaxY) {
+            const midY = (positionedMin.y + positionedMax.y) * 0.5;
+            panClampMinY = midY;
+            panClampMaxY = midY;
+          }
+
+          camera.position.set(dist, dist * 0.35, dist);
+          controls.target.set(offsetX, 0, 0);
+          zoomRange = { min: dist * 0.35, max: dist * 4.0 };
+          controls.minDistance = zoomRange.min;
+          controls.maxDistance = zoomRange.max;
+          controls.update();
+          initialCamPos = camera.position.clone();
+          initialTarget = controls.target.clone();
+          if (pendingZoom !== null) {
+            applyZoomNormalized(pendingZoom);
+            pendingZoom = null;
+          }
+        },
+        () => {},
+        e => {
+          console.error(e);
+        }
+      );
+
+      window.addEventListener("resize", () => {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+      });
+
+      function formatMetaToPrompt(meta) {
+        const lines = [];
+        if (meta?.places) lines.push(`place: ${meta.places}`);
+        if (meta?.gossip) lines.push(`gossip: ${meta.gossip}`);
+        if (meta?.style) lines.push(`style: ${meta.style}`);
+        if (meta?.people) lines.push(`person: ${meta.people}`);
+        if (meta?.atmosphere) lines.push(`atmosphere: ${meta.atmosphere}`);
+
+        return {
+          label: "prompt",
+          lines: lines.length ? lines : ["(kein Prompt gefunden)"]
+        };
+      }
+
+      function showPromptOverlay(data) {
+        const promptOverlay = document.getElementById("promptOverlay");
+        const promptTextEl = document.getElementById("promptText");
+        promptTextEl.textContent = "";
+        const label = document.createElement("span");
+        label.className = "promptLabel";
+        label.textContent = data.label;
+        promptTextEl.appendChild(label);
+        promptTextEl.appendChild(document.createTextNode("\n"));
+        const body = document.createElement("span");
+        body.className = "promptBody";
+        body.textContent = data.lines.join("\n");
+        promptTextEl.appendChild(body);
+
+        promptOverlay.classList.add("isOpen");
+        promptOverlay.setAttribute("aria-hidden", "false");
+      }
+
+      function hidePromptOverlay() {
+        const promptOverlay = document.getElementById("promptOverlay");
+        const promptTextEl = document.getElementById("promptText");
+        promptOverlay.classList.remove("isOpen");
+        promptOverlay.setAttribute("aria-hidden", "true");
+        promptTextEl.textContent = "";
+      }
+
+      renderer.domElement.addEventListener("pointerdown", async (e) => {
+        const rect = renderer.domElement.getBoundingClientRect();
+        const pointer = new THREE.Vector2();
+        pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(pointer, camera);
+        const hits = raycaster.intersectObjects(screens, false);
+
+        if (!hits.length) {
+          hidePromptOverlay();
+          return;
+        }
+
+        const mesh = hits[0].object;
+        const file = mesh.userData.file;
+        if (!file) return;
+
+        if (!mesh.userData.meta) {
+          mesh.userData.meta = await loadMetaForImage(file);
+        }
+
+        showPromptOverlay(formatMetaToPrompt(mesh.userData.meta));
+      });
+
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") hidePromptOverlay();
+      });
+
+      function animate() {
+        requestAnimationFrame(animate);
+        const delta = clock.getDelta();
+        if (mixer) mixer.update(delta);
+        if (camAnim) {
+          const now = performance.now();
+          const t = Math.min((now - camAnim.startTime) / camAnim.duration, 1);
+          const e = easeInOutCubic(t);
+
+          // Zielpunkt ggf. live vom Mesh holen
+          let liveTarget = null;
+          if (camAnim.followMesh) {
+            liveTarget = getMeshWorldCenter(camAnim.followMesh).clone();
+          }
+
+          const endTarget = liveTarget || camAnim.endTarget || camAnim.startTarget;
+          controls.target.lerpVectors(camAnim.startTarget, endTarget, e);
+
+          // Position: wenn endPos vorhanden normal lerpen, sonst nur auf target schauen
+          if (camAnim.endPos) {
+            camera.position.lerpVectors(camAnim.startPos, camAnim.endPos, e);
+          }
+
+          camera.lookAt(controls.target);
+
+          if (t >= 1) camAnim = null;
+        }
+        const frameScale = delta * 60;
+
+        // Während Kamera-Animation/Lock: KEIN Orbit/Pan drift!
+        const locked = camAnim || performance.now() < inputLockUntil;
+        if (locked) {
+          orbitInputDX = orbitInputDY = 0;
+          panInput = 0;
+          orbitVelDX = orbitVelDY = 0;
+          panVel = 0;
+        } else {
+          orbitVelDX += (orbitInputDX - orbitVelDX) * ORBIT_SMOOTH;
+          orbitVelDY += (orbitInputDY - orbitVelDY) * ORBIT_SMOOTH;
+          panVel += (panInput - panVel) * PAN_SMOOTH;
+
+          if (Math.abs(orbitVelDX) > 0.0001 || Math.abs(orbitVelDY) > 0.0001) {
+            orbitCameraAroundTarget(orbitVelDX * frameScale, orbitVelDY * frameScale);
+          }
+          if (Math.abs(panVel) > 0.0001) {
+            panCameraVertical(panVel * frameScale);
+          }
+        }
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gallery Wall</title>
+  <style>
+    @font-face{
+      font-family:"GeistRegular";
+      font-style:normal;
+      font-weight:400;
+      src:url("./fonts/Geist-Regular.otf") format("opentype");
+    }
+    @font-face{
+      font-family:"RedactionItalic";
+      font-style:italic;
+      font-weight:400;
+      src:url("./fonts/Redaction-Italic.otf") format("opentype");
+    }
+
+    :root { --swipeDur: 820ms; --overlayStroke: #e5007d; --lineWidth: 2px; }
+
+    html, body { margin:0; height:100%; background:#fff; }
+    html.is-spotlight{ background:#e6007e; }
+    body{
+      font-family:"GeistRegular", system-ui, sans-serif;
+      overflow:hidden;
+    }
+    body.is-spotlight{ background:#e6007e; }
+    body.is-spotlight{ --overlayStroke: #fff; }
+    body:not(.is-waiting):not(.is-spotlight){
+      background:#fff;
+    }
+
+    .wrap{
+      height:100%;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      box-sizing:border-box;
+      position:relative;
+      z-index:10;
+    }
+
+    .panel{
+      width:min(91vh * 9/16 * 1.2, 68vw * 1.2);
+      max-height:92vh;
+      display:grid;
+      grid-template-rows: 1fr auto;
+      gap:22px;
+    }
+
+    .frame{
+      position:relative;
+      width:100%;
+      aspect-ratio: 9 / 16;
+      background:transparent;
+      border-radius:8px;
+      overflow:hidden;
+    }
+    body.is-spotlight .frame{ background:transparent; }
+    body.is-waiting .frame{ background:transparent; }
+    body.is-spotlight .frame{ border-radius:0; }
+
+    /* Das Bild (Slideshow) */
+    #img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:none;
+      background:transparent;
+      border-radius:8px;
+      position:relative;
+      z-index:2;
+      transform:translateY(-12%) scale(0.7);
+      transform-origin:center;
+    }
+    body.is-spotlight #img{ background:transparent; }
+    body.is-spotlight #img{ border-radius:0; }
+    .frame.is-featured #img{ display:block; }
+
+    /* Optionaler Placeholder (wenn keine Bilder da sind) */
+    canvas#placeholder3d{
+      position:fixed;
+      left:50%;
+      top:50%;
+      width:100vw;
+      height:100vh;
+      transform: translate(-50%, -50%);
+      display:none;
+      z-index:5;
+    }
+    canvas#placeholder{
+      position:fixed;
+      left:50%;
+      top:50%;
+      width:100vw;
+      height:100vh;
+      transform: translate(-50%, -50%);
+      display:none;
+      z-index:70;
+    }
+    .frame.is-waiting{ background:transparent; }
+    .frame.is-waiting canvas#placeholder3d{ display:block; }
+    .frame.is-waiting canvas#placeholder{ display:block; }
+
+    .meta{
+      font-size:18px;
+      line-height:1.25;
+      color:#e6007e;
+      white-space:pre-wrap;
+      text-align:center;
+      min-height:6.2em;
+      margin-top:-60px;
+      position:relative;
+      z-index:30;
+      padding-bottom:120px;
+    }
+    body.is-waiting .meta{ display:none; }
+    body.is-spotlight .meta{ color:#fff; }
+    .prompt-label{
+      font-family:"RedactionItalic", system-ui, sans-serif;
+      font-style:italic;
+      font-size:43.2px;
+      margin:0 0 8px;
+      color:#e6007e;
+    }
+    body.is-spotlight .prompt-label{ color:#fff; }
+    .prompt-body{
+      font-family:"GeistRegular", system-ui, sans-serif;
+      font-size:32.4px;
+    }
+
+
+    /* GLOBAL SVG OVERLAY (dein SVG) */
+    #screenOverlay{
+      position:fixed;
+      inset:0;
+      z-index:50;
+      pointer-events:none;
+    }
+    #screenOverlay img{
+      position:absolute;
+      inset:0;
+      margin:auto;
+      height:100vh;
+      aspect-ratio: 9 / 16;
+      width:auto;
+      display:block;
+      transition:opacity 200ms ease;
+    }
+    #overlayMount svg{
+      position:absolute;
+      inset:0;
+      margin:auto;
+      height:100vh;
+      aspect-ratio: 9 / 16;
+      width:auto;
+      display:block;
+    }
+
+    /* Draw Classic */
+    #screenOverlay .draw-classic{
+      stroke-dasharray: var(--minLen) var(--restMin);
+      stroke-dashoffset: 0;
+      animation: drawClassic var(--dur, 6.5s) linear var(--delay, 0s) infinite alternate;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    #screenOverlay .circle-static{
+      stroke: var(--overlayStroke);
+      stroke-width: var(--lineWidth);
+      opacity: 1;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Wichtig: Dots NICHT animieren */
+    #screenOverlay #overlay_dots circle{
+      fill: #ffffff;
+      stroke: #e6007e;
+      stroke-width: 2px;
+      opacity: 1;
+    }
+    body.is-spotlight #screenOverlay #overlay_dots circle{
+      fill: #e6007e !important;
+      stroke: #ffffff !important;
+    }
+
+
+    @keyframes drawClassic{
+      0%{
+        stroke-dasharray: var(--minLen) var(--restMin);
+      }
+      100%{
+        stroke-dasharray: var(--maxLen) var(--restMax);
+      }
+    }
+
+    @keyframes drawLoopMask{
+      0%{
+        stroke-dasharray: 0 var(--len);
+        stroke-dashoffset: 0;
+        opacity: 0;
+      }
+      50%{
+        stroke-dasharray: var(--len) 0;
+        stroke-dashoffset: 0;
+        opacity: 1;
+      }
+      100%{
+        stroke-dasharray: 0 var(--len);
+        stroke-dashoffset: calc(-1 * var(--len));
+        opacity: 0;
+      }
+    }
+
+    #revealUnderlay{
+      position:fixed;
+      inset:0;
+      z-index:2;
+      pointer-events:none;
+      opacity:0;
+      transition:opacity 200ms ease;
+    }
+    #revealUnderlay img{
+      position:absolute;
+      inset:0;
+      margin:auto;
+      height:100vh;
+      aspect-ratio: 9 / 16;
+      width:auto;
+      display:block;
+    }
+    body.is-spotlight #revealUnderlay{ opacity:1; }
+
+    #slideshowUnderlay{
+      position:fixed;
+      inset:0;
+      z-index:1;
+      pointer-events:none;
+      opacity:0;
+      transition:opacity 200ms ease;
+    }
+    #slideshowUnderlay img{
+      position:absolute;
+      inset:0;
+      margin:auto;
+      height:100vh;
+      aspect-ratio: 9 / 16;
+      width:auto;
+      display:block;
+    }
+    body:not(.is-waiting):not(.is-spotlight) #slideshowUnderlay{ opacity:1; }
+
+    .panel.is-swiping{
+      animation: swipeDown var(--swipeDur) ease both;
+    }
+    @keyframes swipeDown{
+      from { transform: translateY(-10%); opacity: 0; }
+      to   { transform: translateY(0);   opacity: 1; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- WICHTIG: Hier wird DEIN SVG geladen -->
+  <div id="slideshowUnderlay" aria-hidden="true">
+    <img src="./svg_gallery-wall/gallerywall_underlay_black.svg" alt="" />
+  </div>
+  <div id="revealUnderlay" aria-hidden="true">
+    <img src="./svg_gallery-wall/gallerywall_underlay.svg" alt="" />
+  </div>
+  <div id="screenOverlay" aria-hidden="true">
+    <div id="overlayMount"></div>
+  </div>
+
+  <div class="wrap">
+    <div class="panel">
+      <div id="frame" class="frame is-waiting">
+        <canvas id="placeholder3d"></canvas>
+        <canvas id="placeholder"></canvas>
+        <img id="img" alt="" />
+      </div>
+      <div id="meta" class="meta"></div>
+    </div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+    const canvas3d = document.getElementById("placeholder3d");
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, alpha: true, antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
+    renderer.setClearColor(0x000000, 0);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+    camera.position.set(0, 4, 4);
+
+    const light = new THREE.HemisphereLight(0xffffff, 0x000000, 1.0);
+    scene.add(light);
+
+    let model = null;
+    const loader = new GLTFLoader();
+    loader.load("./gallery.glb", (gltf) => {
+      model = gltf.scene;
+      scene.add(model);
+
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      model.position.sub(center);
+
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const fov = camera.fov * (Math.PI / 180);
+      let dist = maxDim / (2 * Math.tan(fov / 2));
+      dist *= 0.333;
+      camera.position.set(0, dist * 1.2, dist * 0.6);
+      camera.lookAt(0, 0, 0);
+    }, undefined, (err) => {
+      console.error("Failed to load gallery.glb", err);
+    });
+
+    function resize3d(){
+      const w = Math.max(1, window.innerWidth);
+      const h = Math.max(1, window.innerHeight);
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+
+    let running = false;
+    let rafId = null;
+    function animate(){
+      if (!running) return;
+      rafId = requestAnimationFrame(animate);
+      if (model) model.rotation.y += 0.0025;
+      renderer.render(scene, camera);
+    }
+
+    window.startPlaceholder3d = () => {
+      resize3d();
+      if (!running){
+        running = true;
+        animate();
+      }
+    };
+    window.stopPlaceholder3d = () => {
+      running = false;
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = null;
+    };
+
+    window.addEventListener("resize", () => {
+      if (running) resize3d();
+    });
+  </script>
+
+  <script>
+    const frame = document.getElementById("frame");
+    const img = document.getElementById("img");
+    const metaEl = document.getElementById("meta");
+    const placeholder = document.getElementById("placeholder");
+    const overlayMount = document.getElementById("overlayMount");
+
+    let slideshowTimer = null;
+    let slideshowIndex = 0;
+    let slideshowList = [];
+    const SWIPE_MS = 820;
+    let placeholderRaf = null;
+    let placeholderStart = 0;
+    let spotlightTimer = null;
+
+    function setOverlay(mode){
+      const url = mode === "pink"
+        ? "./svg_gallery-wall/gallerywall_vorlage_pink.svg"
+        : "./svg_gallery-wall/gallerywall_vorlage_01.svg";
+
+      loadOverlaySvg(url);
+    }
+
+    async function loadOverlaySvg(url){
+      const r = await fetch(url);
+      const svgText = await r.text();
+      overlayMount.innerHTML = svgText;
+
+      const svg = overlayMount.querySelector("svg");
+      if (!svg) return;
+
+      prepareDraw(svg);
+    }
+
+    function prepareDraw(svg){
+      // Lines animieren
+      const lines = svg.querySelectorAll("#overlay_lines line");
+      console.log("Classic draw: vor isRenderable filter:", lines.length);
+
+      // Circle immer sichtbar (nicht animieren)
+      const circle = svg.querySelector("#overlay_circle circle");
+      const circleStyle = circle ? getComputedStyle(circle) : null;
+      const circleStrokeWidth = circle
+        ? (circle.getAttribute("stroke-width") || circleStyle.strokeWidth)
+        : null;
+      const circleStroke = circle
+        ? (circle.getAttribute("stroke") || circleStyle.stroke)
+        : null;
+      const forcedStrokeWidth = "2";
+
+      // Dots: keine eigene Animation – Sichtbarkeit kommt nur durch die Linien-Maske
+      const dots = svg.querySelectorAll("#overlay_dots circle");
+      dots.forEach(dot => {
+        dot.classList.remove("dot-fade");
+        dot.style.animation = "none";
+        dot.style.animationDelay = "";
+      });
+
+      // Circle: cleanup + statische Klasse
+      if (circle){
+        circle.className = "";
+        circle.classList.add("circle-static");
+        circle.style.animation = "none";
+        circle.style.strokeWidth = forcedStrokeWidth;
+        if (circleStroke) circle.style.stroke = circleStroke;
+      }
+
+      // Lines: Draw-Loop, versetzt
+      const baseDur = 5.0;
+      const stagger = 0.20;
+
+      lines.forEach((el, i) => {
+        el.className = "";
+        el.style.animation = "";
+        el.style.animationDelay = "";
+        el.style.fill = "none";
+        if (circleStroke) el.style.stroke = circleStroke;
+        el.style.strokeWidth = forcedStrokeWidth;
+
+        const len = el.getTotalLength();
+        el.classList.add("draw-classic");
+        const minFrac = 0.35;
+        const minLen = len * minFrac;
+        const maxLen = Math.max(minLen + 1, len);
+        const restMin = Math.max(0.1, len - minLen);
+        const restMax = Math.max(0.1, len - maxLen);
+
+        el.style.setProperty("--minLen", `${minLen}`);
+        el.style.setProperty("--restMin", `${restMin}`);
+        el.style.setProperty("--maxLen", `${maxLen}`);
+        el.style.setProperty("--restMax", `${restMax}`);
+
+        const dur = baseDur + (i % 6) * 0.6 + Math.random() * 2.0;
+        el.style.setProperty("--dur", `${dur}s`);
+
+        el.style.setProperty("--delay", `${-(i * stagger + Math.random() * 1.6)}s`);
+      });
+    }
+
+    function applyLineClipToDots(svg){
+      const dotsGroup  = svg.querySelector("#overlay_dots");
+      const linesGroup = svg.querySelector("#overlay_lines");
+      if (!dotsGroup || !linesGroup) return;
+
+      const NS = "http://www.w3.org/2000/svg";
+
+      // defs sicherstellen
+      let defs = svg.querySelector("defs");
+      if (!defs){
+        defs = document.createElementNS(NS, "defs");
+        svg.insertBefore(defs, svg.firstChild);
+      }
+
+      // alte clipPath entfernen
+      const old = svg.querySelector("#lineClip");
+      if (old) old.remove();
+
+      const clip = document.createElementNS(NS, "clipPath");
+      clip.setAttribute("id", "lineClip");
+      clip.setAttribute("clipPathUnits", "userSpaceOnUse");
+
+      // Dot-Größe → Clip muss deutlich dicker sein
+      const firstDot = dotsGroup.querySelector("circle");
+      const r = firstDot ? parseFloat(firstDot.getAttribute("r") || "6") : 6;
+      const clipWidth = r * 3; // bewusst dick → kein Halbkreis
+
+      // Linien klonen (Animation bleibt!)
+      const clipLines = linesGroup.cloneNode(true);
+      clipLines.querySelectorAll("line").forEach(el => {
+        el.removeAttribute("stroke");
+        el.removeAttribute("fill");
+        el.setAttribute("stroke", "#000");
+        el.setAttribute("stroke-width", clipWidth);
+        el.setAttribute("stroke-linecap", "round");
+        el.setAttribute("stroke-linejoin", "round");
+      });
+
+      clip.appendChild(clipLines);
+      defs.appendChild(clip);
+
+      // Clip auf Dots anwenden
+      dotsGroup.setAttribute("clip-path", "url(#lineClip)");
+    }
+
+    setOverlay("default");
+
+    function resizePlaceholder(){
+      const dpr = window.devicePixelRatio || 1;
+      const w = Math.max(1, Math.floor(window.innerWidth * dpr));
+      const h = Math.max(1, Math.floor(window.innerHeight * dpr));
+      placeholder.width = w;
+      placeholder.height = h;
+    }
+
+    function startPlaceholder(){
+      if (placeholderRaf) return;
+      if (window.startPlaceholder3d) window.startPlaceholder3d();
+      resizePlaceholder();
+      placeholderStart = performance.now();
+      const ctx = placeholder.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+
+      const draw = (t) => {
+        const elapsed = (t - placeholderStart) / 1000;
+        const w = placeholder.width / dpr;
+        const h = placeholder.height / dpr;
+
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, w, h);
+
+        const cx = w / 2;
+        const cy = h / 2;
+        const base = Math.min(w, h) * 0.216;
+        const rings = 3;
+        for (let i = 0; i < rings; i++){
+          const phase = elapsed * 2.2 + i * 0.7;
+          const scale = 0.85 + 0.15 * Math.sin(phase);
+          const radius = base * (1 + i * 0.45) * scale;
+          const alpha = 0.75 - i * 0.18;
+          ctx.strokeStyle = `rgba(0, 0, 0, 1)`;
+          ctx.lineWidth = Math.max(2.8, base * 0.072);
+          ctx.beginPath();
+          ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        placeholderRaf = requestAnimationFrame(draw);
+      };
+
+      placeholderRaf = requestAnimationFrame(draw);
+      window.addEventListener("resize", resizePlaceholder);
+    }
+
+    function stopPlaceholder(){
+      if (placeholderRaf){
+        cancelAnimationFrame(placeholderRaf);
+        placeholderRaf = null;
+      }
+      if (window.stopPlaceholder3d) window.stopPlaceholder3d();
+      const ctx = placeholder.getContext("2d");
+      ctx.clearRect(0, 0, placeholder.width, placeholder.height);
+      window.removeEventListener("resize", resizePlaceholder);
+    }
+
+    function setWaiting(on){
+      frame.classList.toggle("is-waiting", on);
+      if (on) frame.classList.remove("is-featured");
+      document.body.classList.toggle("is-waiting", on);
+      if (on) setOverlay("default");
+    }
+
+    function setSpotlight(on){
+      document.body.classList.toggle("is-spotlight", on);
+      document.documentElement.classList.toggle("is-spotlight", on);
+      setOverlay(on ? "pink" : "default");
+    }
+
+    function setFeatured(file){
+      frame.classList.add("is-featured");
+      frame.classList.remove("is-waiting");
+      img.src = `/out/${encodeURIComponent(file)}?t=${Date.now()}`;
+
+      const panel = frame.closest(".panel");
+      if (panel){
+        panel.classList.remove("is-swiping");
+        void panel.offsetWidth;
+        panel.classList.add("is-swiping");
+      }
+    }
+
+    async function loadMeta(file){
+      try{
+        const jsonFile = file.replace(/\.(png|jpg|jpeg|webp)$/i, ".json");
+        const r = await fetch(`/out/${encodeURIComponent(jsonFile)}?t=${Date.now()}`);
+        if (!r.ok) return null;
+        return await r.json();
+      }catch{ return null; }
+    }
+
+    function hasPrompt(meta){
+      if (!meta) return false;
+      if (typeof meta.prompt === "string" && meta.prompt.trim()) return true;
+      return Boolean(meta.gossip || meta.places || meta.people || meta.atmosphere || meta.style);
+    }
+
+    const CUTOFF_DATE = new Date(2026, 0, 13);
+
+    function parseCreatedAt(meta){
+      if (!meta) return null;
+      const raw = meta.createdAt ?? meta.created_at ?? meta.created ?? meta.timestamp;
+      if (!raw) return null;
+
+      if (typeof raw === "number"){
+        const ms = raw < 1e12 ? raw * 1000 : raw;
+        const d = new Date(ms);
+        return Number.isNaN(d.getTime()) ? null : d;
+      }
+      if (typeof raw === "string"){
+        const d = new Date(raw);
+        if (!Number.isNaN(d.getTime())) return d;
+        const m = raw.match(/(\d{2})\.(\d{2})(?:\.(\d{4}))?/);
+        if (m){
+          const year = m[3] ? Number(m[3]) : new Date().getFullYear();
+          const d2 = new Date(year, Number(m[2]) - 1, Number(m[1]));
+          return Number.isNaN(d2.getTime()) ? null : d2;
+        }
+      }
+      return null;
+    }
+
+    function isOnOrAfterCutoff(meta){
+      const d = parseCreatedAt(meta);
+      return d ? d > CUTOFF_DATE : false;
+    }
+
+    function renderMeta(meta){
+      metaEl.textContent = "";
+      if (!meta) return;
+
+      const person = meta.person ?? meta.people ?? "";
+      const place = meta.place ?? meta.places ?? "";
+      const values = [
+        person,
+        meta.gossip ?? "",
+        meta.subject ?? "",
+        place,
+        meta.atmosphere ?? "",
+        meta.style ?? "",
+      ].map((v) => (typeof v === "string" ? v.trim() : String(v ?? "")));
+
+      const label = document.createElement("div");
+      label.className = "prompt-label";
+      label.textContent = "Prompt:";
+
+      const body = document.createElement("div");
+      body.className = "prompt-body";
+      body.textContent = values.filter(Boolean).join(", ");
+
+      metaEl.appendChild(label);
+      metaEl.appendChild(body);
+    }
+
+    async function fetchImages(){
+      const r = await fetch("/api/images");
+      const j = await r.json();
+      const candidates = (j.images || []).slice().reverse(); // newest first
+
+      // keep deine Eligibility-Checks (Prompt + Datum)
+      const checks = await Promise.all(candidates.map(async (f) => {
+        const meta = await loadMeta(f);
+        if (!hasPrompt(meta)) return null;
+        if (!isOnOrAfterCutoff(meta)) return null;
+        return f;
+      }));
+
+      slideshowList = checks.filter(Boolean);
+
+      // shuffle
+      for (let i = slideshowList.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [slideshowList[i], slideshowList[j]] = [slideshowList[j], slideshowList[i]];
+      }
+      slideshowIndex = 0;
+    }
+
+    async function startSlideshow(){
+      await fetchImages();
+      if (!slideshowList.length){
+        setWaiting(true);
+        stopPlaceholder();
+        return;
+      }
+      setWaiting(false);
+      setSpotlight(false);
+
+      const tick = async () => {
+        if (slideshowIndex >= slideshowList.length){
+          for (let i = slideshowList.length - 1; i > 0; i--){
+            const j = Math.floor(Math.random() * (i + 1));
+            [slideshowList[i], slideshowList[j]] = [slideshowList[j], slideshowList[i]];
+          }
+          slideshowIndex = 0;
+        }
+        const file = slideshowList[slideshowIndex];
+        slideshowIndex++;
+        setFeatured(file);
+        renderMeta(await loadMeta(file));
+      };
+
+      await tick();
+      clearInterval(slideshowTimer);
+      slideshowTimer = setInterval(tick, 5000);
+    }
+
+    async function showFeaturedForAWhile(file){
+      clearInterval(slideshowTimer);
+      slideshowTimer = null;
+      if (spotlightTimer){
+        clearTimeout(spotlightTimer);
+        spotlightTimer = null;
+      }
+
+      setWaiting(false);
+      setSpotlight(true);
+      setFeatured(file);
+      renderMeta(await loadMeta(file));
+
+      // nach 9s wieder in die Slideshow zurück
+      spotlightTimer = setTimeout(() => startSlideshow(), 9000);
+    }
+
+    // SSE: wenn ein neues Bild generiert wurde, kurz spotlighten
+    const es = new EventSource("/api/stream");
+    es.onmessage = async (ev) => {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch { return; }
+
+      if (msg.type === "run_start"){
+        setWaiting(true);
+        setSpotlight(false);
+        clearInterval(slideshowTimer);
+        slideshowTimer = null;
+        startPlaceholder();
+        metaEl.textContent = "";
+      }
+
+      if (msg.type === "run_done" && msg.file){
+        stopPlaceholder();
+        showFeaturedForAWhile(msg.file);
+      }
+    };
+
+    startSlideshow();
+  </script>
+</body>
+</html>

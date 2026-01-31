@@ -1,0 +1,1051 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>Controller</title>
+    <style>
+      @font-face {
+        font-family: "RedactionItalic";
+        font-style: italic;
+        font-weight: 400;
+        src: url("./fonts/Redaction-Italic.otf") format("opentype");
+      }
+      @font-face {
+        font-family: "GeistRegular";
+        font-style: normal;
+        font-weight: 400;
+        src: url("./fonts/Geist-Regular.otf") format("opentype");
+      }
+
+      :root{
+        --pink:#e6007e;
+        --pad: 18px;
+        --radius: 26px;
+      }
+
+      html, body, #stage {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+      }
+      html, body {
+        font-family: "GeistRegular", system-ui, -apple-system, Arial, sans-serif;
+        touch-action: none; /* wichtig fürs Joystick */
+      }
+      #stage {
+        position: relative;
+      }
+      #design {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform-origin: center;
+      }
+      #startScreen{
+        position: fixed;
+        inset: 0;
+        z-index: 4000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 300ms ease;
+        background: #000;
+      }
+      #startScreen.is-visible{
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .wrap{
+        height: 100%;
+        width: 100%;
+        margin: 0 auto;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        padding: calc(var(--pad) + env(safe-area-inset-top)) var(--pad) calc(var(--pad) + env(safe-area-inset-bottom));
+        box-sizing: border-box;
+        gap: 16px;
+        align-items: center;
+        justify-items: center;
+        text-align: center;
+      }
+
+      .title{
+        font-family: "RedactionItalic", system-ui, sans-serif;
+        font-style: italic;
+        font-size: 18px;
+        color: var(--pink);
+        letter-spacing: 0.2px;
+      }
+
+      .generate{
+        width: 100%;
+        padding: 0;
+        border-radius: 999px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        transform: scale(1.15);
+        transform-origin: center;
+        margin-bottom: 0;
+      }
+      .generate:disabled{
+        cursor: default;
+        opacity: 1;
+      }
+      .generate img{
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .genProgress{
+        width: min(520px, 100%);
+        margin: 0 auto 0;
+        display: none;
+        gap: 8px;
+        align-items: center;
+        justify-items: center;
+      }
+
+      .genProgress.active{
+        display: grid;
+      }
+
+      .genTimer{
+        font-family: "RedactionItalic", system-ui, sans-serif;
+        font-style: italic;
+        font-size: 44px;
+        letter-spacing: 0.2px;
+        line-height: 1;
+        color: rgba(230,0,126,0.85);
+      }
+
+      .progressTrack{
+        width: 100%;
+        height: 18px;
+        border-radius: 999px;
+        border: 2px solid rgba(230,0,126,0.35);
+        background: #000;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+
+      .progressFill{
+        height: 100%;
+        width: 0%;
+        background: var(--pink);
+        border-radius: 999px;
+        transition: width 0.12s linear;
+      }
+
+      .status{
+        margin-top: 10px;
+        color: var(--pink);
+        font-size: 16px;
+        min-height: 22px;
+        text-align: center;
+      }
+
+      .pad{
+        align-self: center;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 12px;
+        width: 100%;
+      }
+
+      .controlRow{
+        width: min(90vmin, 90vw);
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 78px;
+        gap: 12px;
+        align-items: stretch;
+        transform: scale(1.2);
+        transform-origin: center;
+      }
+
+      .mainColumn{
+        display: grid;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .hint{
+        text-align: center;
+        color: var(--pink);
+        font-size: 15px;
+        opacity: 0.9;
+      }
+
+      .stickArea{
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        margin: 0;
+        border-radius: var(--radius);
+        background: #000;
+        border: 2px solid rgba(230,0,126,0.35);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .centerDot{
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 4%;
+        height: 4%;
+        transform: translate(-50%, -50%);
+        border-radius: 999px;
+        background: rgba(230,0,126,0.35);
+      }
+
+      .axisHint{
+        position:absolute;
+        inset:0;
+        pointer-events:none;
+        opacity: 0.0;
+        transition: opacity 180ms ease;
+      }
+
+      .stickArea.is-idle .axisHint{
+        opacity: 1;
+      }
+
+      .axisH, .axisV{
+        position:absolute;
+        left:50%; top:50%;
+        background: rgb(230,0,126);
+        transform: translate(-50%,-50%);
+      }
+
+      .axisH{ width: 68%; height: 0.8px; border-radius: 99px; }
+      .axisV{ width: 0.8px; height: 68%; border-radius: 99px; }
+
+      .arrow{
+        position:absolute;
+        width: 0; height: 0;
+        border-style: solid;
+        opacity: 0.9;
+      }
+
+      .aL{ left: 15%; top: 50%; transform: translate(-50%,-50%);
+        border-width: 10px 14px 10px 0;
+        border-color: transparent rgb(230,0,126) transparent transparent;
+      }
+      .aR{ right: 15%; top: 50%; transform: translate(50%,-50%);
+        border-width: 10px 0 10px 14px;
+        border-color: transparent transparent transparent rgb(230,0,126);
+      }
+      .aU{ left: 50%; top: 15%; transform: translate(-50%,-50%);
+        border-width: 0 10px 14px 10px;
+        border-color: transparent transparent rgb(230,0,126) transparent;
+      }
+      .aD{ left: 50%; bottom: 15%; transform: translate(-50%,50%);
+        border-width: 14px 10px 0 10px;
+        border-color: rgb(230,0,126) transparent transparent transparent;
+      }
+
+      .knob{
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 18%;
+        height: 18%;
+        transform: translate(-50%, -50%);
+        border-radius: 999px;
+        background: var(--pink);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        opacity: 1;
+        touch-action: none;
+      }
+      .knob.is-pulse{
+        animation: knobPulse 520ms ease-out 1;
+      }
+      @keyframes knobPulse{
+        0%   { transform: translate(-50%,-50%) scale(1); }
+        45%  { transform: translate(-50%,-50%) scale(1.10); }
+        100% { transform: translate(-50%,-50%) scale(1); }
+      }
+
+      .axisHint.is-flash{
+        opacity: 0.85 !important;
+        transition: opacity 0ms;
+      }
+
+      .zoomControl{
+        width: 100%;
+        margin: 0;
+        display: grid;
+        gap: 8px;
+      }
+
+      .zoomColumn{
+        display: grid;
+        gap: 8px;
+      }
+      .zoomRow{
+        display: grid;
+        grid-template-columns: 36px 1fr 36px;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .zoomOuter{
+        border-radius: 26px;
+        border: 2px solid rgba(230,0,126,0.35);
+        background: #000;
+        padding: 6px 8px;
+        box-sizing: border-box;
+      }
+
+      .panColumn{
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        align-items: center;
+        justify-items: center;
+        gap: 2px;
+        padding: 4px 4px;
+        height: var(--panHeight, 260px);
+        box-sizing: border-box;
+        border-radius: 26px;
+        border: 2px solid rgba(230,0,126,0.35);
+        background: #000;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .panIcon{
+        color: rgba(230,0,126,0.8);
+        font-size: 22px;
+        line-height: 1;
+        user-select: none;
+      }
+
+      .panSliderWrap{
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+
+      .panSlider{
+        width: calc(var(--panHeight, 260px) - 64px);
+        max-width: 420px;
+        appearance: none;
+        height: 40px;
+        border-radius: 999px;
+        background: #000;
+        border: 2px solid rgba(230,0,126,0.35);
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) rotate(-90deg);
+        transform-origin: center;
+        touch-action: none;
+      }
+
+      .panSlider::-webkit-slider-thumb{
+        appearance: none;
+        width: 80px;
+        height: 40px;
+        border-radius: 999px;
+        background: var(--pink);
+        border: none;
+      }
+
+      .panSlider::-moz-range-thumb{
+        width: 80px;
+        height: 40px;
+        border-radius: 999px;
+        background: var(--pink);
+        border: none;
+      }
+
+      .zoomIcon{
+        color: rgba(230,0,126,0.75);
+        font-size: 25.3px;
+        line-height: 1;
+        text-align: center;
+        user-select: none;
+      }
+
+      .zoomSlider{
+        width: 100%;
+        appearance: none;
+        height: 40px;
+        border-radius: 999px;
+        background: #000;
+        border: 2px solid rgba(230,0,126,0.35);
+      }
+
+      .resetBtn{
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 999px;
+        border: 2px solid rgba(230,0,126,0.35);
+        background: #000;
+        color: var(--pink);
+        font-family: "GeistRegular", system-ui, sans-serif;
+        font-size: 16px;
+        cursor: pointer;
+      }
+
+      .zoomSlider::-webkit-slider-thumb{
+        appearance: none;
+        width: 80px;
+        height: 40px;
+        border-radius: 999px;
+        background: var(--pink);
+        border: none;
+      }
+
+      .zoomSlider::-moz-range-thumb{
+        width: 80px;
+        height: 40px;
+        border-radius: 999px;
+        background: var(--pink);
+        border: none;
+      }
+
+      .row{
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        width: min(540px, 100%);
+        margin: 0 auto;
+      }
+
+      .chip{
+        padding: 14px 12px;
+        border-radius: 999px;
+        border: 2px solid rgba(230,0,126,0.35);
+        color: var(--pink);
+        background: #000;
+        text-align: center;
+        font-size: 15px;
+      }
+
+      .footer{
+        text-align: center;
+        color: rgba(230,0,126,0.7);
+        font-size: 13px;
+      }
+
+      button, .touch {
+        min-width: 56px;
+        min-height: 56px;
+        touch-action: manipulation;
+      }
+
+      /* --- Startscreen SVG overlay (animierte Linien + Punkte) --- */
+      :root{
+        --overlayStroke: #ffffff;   /* Linienfarbe: WEISS */
+        --lineWidth: 2px;
+        --minFrac: 0.35;
+
+        --dotFill: var(--pink);     /* Punkte: pinkes Fill */
+        --dotStroke: #ffffff;       /* Punkte: weisse Outline */
+      }
+
+      #startSvgMount{
+        max-width: 100vw;
+        max-height: 100vh;
+      }
+
+      #startSvgMount svg{
+        display: block;
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+      }
+
+      #startScreen .draw-loop{
+        stroke: var(--overlayStroke);
+        stroke-width: var(--lineWidth);
+        opacity: 1;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+
+        stroke-dashoffset: 0;
+        stroke-dasharray: var(--minLen) var(--restMin);
+
+        animation: drawLen var(--dur) cubic-bezier(.45,0,.2,1) infinite alternate;
+        animation-delay: var(--delay);
+        will-change: stroke-dasharray;
+      }
+
+      #startScreen .circle-static{
+        stroke: var(--overlayStroke);
+        stroke-width: var(--lineWidth);
+        opacity: 1;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      #startScreen #overlay_dots circle{
+        fill: var(--dotFill);
+        stroke: var(--dotStroke);
+        stroke-width: var(--lineWidth);
+        opacity: 1;
+      }
+
+      @keyframes drawLen{
+        from{ stroke-dasharray: var(--minLen) var(--restMin); }
+        to{   stroke-dasharray: var(--maxLen) var(--restMax); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="startScreen" class="is-visible" aria-hidden="false">
+      <div id="startSvgMount"></div>
+    </div>
+    <div id="stage">
+      <div id="design">
+        <div class="wrap">
+          <div>
+            <button id="btnGen" class="generate" type="button" aria-label="Generate Hyperreality">
+              <img src="./svg_control/Button_generatehyperreality.svg" alt="" />
+            </button>
+            <div id="genProgress" class="genProgress" aria-hidden="true">
+              <div id="genTimer" class="genTimer">01:00</div>
+              <div class="progressTrack">
+                <div id="progressFill" class="progressFill"></div>
+              </div>
+            </div>
+        <div id="status" class="status"></div>
+      </div>
+
+      <div class="pad">
+        <div id="controlRow" class="controlRow">
+          <div class="mainColumn">
+            <div id="stickArea" class="stickArea">
+              <div class="centerDot"></div>
+              <div class="axisHint" aria-hidden="true">
+                <span class="axisH"></span>
+                <span class="axisV"></span>
+                <span class="arrow aL"></span>
+                <span class="arrow aR"></span>
+                <span class="arrow aU"></span>
+                <span class="arrow aD"></span>
+              </div>
+              <div id="knob" class="knob"></div>
+            </div>
+            <div class="zoomControl">
+              <div class="zoomColumn">
+                <div class="zoomOuter">
+                  <div class="zoomRow">
+                    <div class="zoomIcon" aria-hidden="true">–</div>
+                    <input id="zoomSlider" class="zoomSlider" type="range" min="0" max="100" value="50" />
+                    <div class="zoomIcon" aria-hidden="true">+</div>
+                  </div>
+                </div>
+                <button id="btnReset" class="resetBtn" type="button">Reset View</button>
+              </div>
+            </div>
+          </div>
+          <div id="panColumn" class="panColumn">
+            <div class="panIcon" aria-hidden="true">↑</div>
+            <div id="panSliderWrap" class="panSliderWrap">
+              <input
+                id="panSlider"
+                class="panSlider"
+                type="range"
+                min="-100"
+                max="100"
+                value="0"
+                step="1"
+                aria-label="Pan up and down"
+              />
+            </div>
+            <div class="panIcon" aria-hidden="true">↓</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+      </div>
+    </div>
+
+    <script>
+      const btnGen = document.getElementById("btnGen");
+      const statusEl = document.getElementById("status");
+      const genProgress = document.getElementById("genProgress");
+      const genTimer = document.getElementById("genTimer");
+      const progressFill = document.getElementById("progressFill");
+      const chipConn = document.getElementById("chipConn");
+      const chipMode = document.getElementById("chipMode");
+      const stickArea = document.getElementById("stickArea");
+      const knob = document.getElementById("knob");
+      const startScreen = document.getElementById("startScreen");
+      const IDLE_TIMEOUT_MS = 3 * 60 * 1000;
+      let idleTimer = null;
+
+      function showStartScreen(){
+        startScreen.classList.add("is-visible");
+        startScreen.setAttribute("aria-hidden", "false");
+      }
+
+      function hideStartScreen(){
+        startScreen.classList.remove("is-visible");
+        startScreen.setAttribute("aria-hidden", "true");
+      }
+
+      function resetIdleTimer(){
+        if (idleTimer) clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+          showStartScreen();
+        }, IDLE_TIMEOUT_MS);
+      }
+
+      startScreen.addEventListener("click", () => {
+        hideStartScreen();
+        resetIdleTimer();
+      });
+
+      ["pointerdown", "pointermove", "touchstart", "keydown", "wheel"].forEach((evt) => {
+        window.addEventListener(evt, () => {
+          if (!startScreen.classList.contains("is-visible")) {
+            resetIdleTimer();
+          }
+        }, { passive: true });
+      });
+      resetIdleTimer();
+
+      function prepareOverlay(svg){
+        const circleEl = svg.querySelector("#overlay_circle circle");
+        const circleStyle = circleEl ? getComputedStyle(circleEl) : null;
+        const circleStrokeWidth = circleEl
+          ? (circleEl.getAttribute("stroke-width") || circleStyle.strokeWidth || "")
+          : "";
+        if (circleStrokeWidth) {
+          svg.style.setProperty("--lineWidth", circleStrokeWidth);
+        }
+
+        const lineCandidates = svg.querySelectorAll(
+          "#overlay_lines path, #overlay_lines line, #overlay_lines polyline, #overlay_lines polygon, " +
+          "#overlay_whitebox path, #overlay_whitebox line, #overlay_whitebox rect, #overlay_whitebox polyline, #overlay_whitebox polygon, " +
+          "#overlay_circle circle"
+        );
+        console.log("overlay_lines count:", lineCandidates.length);
+
+        lineCandidates.forEach((el) => {
+          el.classList.add("draw-loop");
+          if (circleStrokeWidth) {
+            el.style.strokeWidth = circleStrokeWidth;
+          }
+
+          let L = 0;
+          try {
+            if (typeof el.getTotalLength === "function") L = el.getTotalLength();
+          } catch {}
+
+          // WICHTIG: <line> hat manchmal kein getTotalLength -> fallback:
+          if (!L || !isFinite(L)) {
+            if (el.tagName.toLowerCase() === "line") {
+              const x1 = parseFloat(el.getAttribute("x1") || "0");
+              const y1 = parseFloat(el.getAttribute("y1") || "0");
+              const x2 = parseFloat(el.getAttribute("x2") || "0");
+              const y2 = parseFloat(el.getAttribute("y2") || "0");
+              L = Math.hypot(x2 - x1, y2 - y1);
+            }
+          }
+          if (!L || !isFinite(L)) return;
+
+          const minFrac = 0.35;
+          const minLen = Math.max(1, L * minFrac);
+          const maxFrac = Math.min(1, minFrac + 0.35 + Math.random() * 0.35);
+          const maxLen = Math.min(L, Math.max(minLen + 1, L * maxFrac));
+          const restMin = Math.max(1, L - minLen);
+          const restMax = Math.max(0.1, L - maxLen);
+
+          const dur = (3.2 + Math.random() * 3.2).toFixed(2) + "s";
+          const delay = (-Math.random() * 2.5).toFixed(2) + "s";
+
+          el.style.setProperty("--minLen", minLen.toFixed(2));
+          el.style.setProperty("--maxLen", maxLen.toFixed(2));
+          el.style.setProperty("--restMin", restMin.toFixed(2));
+          el.style.setProperty("--restMax", restMax.toFixed(2));
+          el.style.setProperty("--dur", dur);
+          el.style.setProperty("--delay", delay);
+        });
+      }
+
+      async function loadStartSvg(){
+        const mount = document.getElementById("startSvgMount");
+        if (!mount) return;
+        const res = await fetch("./svg_control/control_startbildschirm.svg", { cache: "no-store" });
+        const txt = await res.text();
+        mount.innerHTML = txt;
+        const svg = mount.querySelector("svg");
+        if (svg) prepareOverlay(svg);
+      }
+
+      loadStartSvg().catch(console.error);
+      const zoomSlider = document.getElementById("zoomSlider");
+      const btnReset = document.getElementById("btnReset");
+      const controlRow = document.getElementById("controlRow");
+      const panColumn = document.getElementById("panColumn");
+      const panSlider = document.getElementById("panSlider");
+
+      function syncPanHeight(){
+        if (!panColumn || !controlRow) return;
+        const h = controlRow.getBoundingClientRect().height;
+        if (!h) return;
+        panColumn.style.setProperty("--panHeight", `${Math.round(h)}px`);
+      }
+
+      requestAnimationFrame(syncPanHeight);
+      window.addEventListener("resize", syncPanHeight);
+
+      console.log("inner:", window.innerWidth, window.innerHeight);
+      console.log("screen:", window.screen.width, window.screen.height);
+      console.log("dpr:", window.devicePixelRatio);
+
+      const BASE_W = 768;
+      const BASE_H = 1024;
+      const MODE = "contain"; // "contain" (kein crop) oder "cover" (crop)
+      const SCALE_MULT = 1;
+
+      function fit() {
+        const sx = window.innerWidth / BASE_W;
+        const sy = window.innerHeight / BASE_H;
+        const s = (MODE === "cover" ? Math.max(sx, sy) : Math.min(sx, sy)) * SCALE_MULT;
+
+        const design = document.getElementById("design");
+        design.style.width = `${BASE_W}px`;
+        design.style.height = `${BASE_H}px`;
+        design.style.transform = `translate(-50%, -50%) scale(${s})`;
+      }
+
+      window.addEventListener("resize", fit);
+      fit();
+
+      let isGenerating = false;
+      let lastSend = 0;
+      let activePointerId = null;
+      let hasTouchedOnce = false;
+      let genStart = 0;
+      let genRaf = null;
+      const GEN_DURATION_MS = 60 * 1000;
+
+      function formatCountdown(ms){
+        const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      }
+
+      function stopGenTimer(){
+        if (genRaf) cancelAnimationFrame(genRaf);
+        genRaf = null;
+      }
+
+      function tickGenTimer(){
+        const elapsed = performance.now() - genStart;
+        const remaining = GEN_DURATION_MS - elapsed;
+        const clamped = Math.min(Math.max(elapsed / GEN_DURATION_MS, 0), 1);
+        progressFill.style.width = `${Math.round(clamped * 100)}%`;
+        genTimer.textContent = formatCountdown(remaining);
+        if (elapsed < GEN_DURATION_MS) {
+          genRaf = requestAnimationFrame(tickGenTimer);
+        } else {
+          genRaf = null;
+        }
+      }
+
+      function setMode(mode){
+        if (chipMode) chipMode.textContent = `mode: ${mode}`;
+      }
+      function setStatus(t){
+        statusEl.textContent = t || "";
+      }
+      function setGenerating(on){
+        isGenerating = on;
+        btnGen.disabled = on;
+        if (on) {
+          setMode("idle");
+          setStatus("");
+          genProgress.classList.add("active");
+          genProgress.setAttribute("aria-hidden", "false");
+          genStart = performance.now();
+          progressFill.style.width = "0%";
+          genTimer.textContent = formatCountdown(GEN_DURATION_MS);
+          stopGenTimer();
+          genRaf = requestAnimationFrame(tickGenTimer);
+        } else {
+          setMode("idle");
+          setStatus("");
+          stopGenTimer();
+          genProgress.classList.remove("active");
+          genProgress.setAttribute("aria-hidden", "true");
+          progressFill.style.width = "0%";
+          genTimer.textContent = formatCountdown(GEN_DURATION_MS);
+        }
+      }
+
+      async function apiGenerate(){
+        const runId = String(Date.now());
+        const r = await fetch("/api/generate", {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ runId })
+        });
+        const j = await r.json().catch(()=> ({}));
+        if (!r.ok || !j.ok) throw new Error(j.error || "generate failed");
+        return j;
+      }
+
+      // --- SSE status (server broadcast) ---
+      const es = new EventSource("/api/stream");
+
+      es.onopen = () => { if (chipConn) chipConn.textContent = "SSE: connected"; };
+      es.onerror = () => { if (chipConn) chipConn.textContent = "SSE: error"; };
+
+      es.onmessage = (ev) => {
+        let msg;
+        try { msg = JSON.parse(ev.data); } catch { return; }
+
+        if (msg.type === "run_start") {
+          setGenerating(true);
+        }
+        if (msg.type === "run_done" || msg.type === "run_error") {
+          setGenerating(false);
+        }
+      };
+
+      // --- Generate button ---
+      btnGen.addEventListener("click", async () => {
+        if (isGenerating) return;
+        setStatus("");
+        try {
+          setGenerating(true); // optimistic
+          await apiGenerate();
+          // run_start kommt auch per SSE; wir bleiben einfach im Generating state
+        } catch (e) {
+          setGenerating(false);
+          setStatus("Error");
+          console.error(e);
+          setTimeout(() => setStatus(""), 1200);
+        }
+      });
+
+      // --- Joystick / orbit control ---
+      function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+      function setKnob(nx, ny, scale = 1){
+        // nx/ny in [-1..1]
+        const rect = stickArea.getBoundingClientRect();
+        const max = Math.min(rect.width, rect.height) * 0.33;
+        const x = nx * max;
+        const y = ny * max;
+        knob.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(${scale})`;
+      }
+
+      async function sendOrbit(nx, ny){
+        // throttle to ~30fps
+        const now = performance.now();
+        if (now - lastSend < 33) return;
+        lastSend = now;
+
+        try {
+          await fetch("/api/control/orbit", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({ dx: nx, dy: ny })
+          });
+        } catch {}
+      }
+
+      function pointerToNorm(e){
+        const rect = stickArea.getBoundingClientRect();
+        const cx = rect.left + rect.width/2;
+        const cy = rect.top + rect.height/2;
+        const dx = (e.clientX - cx) / (rect.width/2);
+        const dy = (e.clientY - cy) / (rect.height/2);
+        // invert y (oben = negativ) -> wir wollen dy direkt als rotateUp
+        const nx = clamp(dx, -1, 1);
+        const ny = clamp(dy, -1, 1);
+        return { nx, ny };
+      }
+
+      function onPointerDown(e){
+        if (!hasTouchedOnce){
+          hasTouchedOnce = true;
+          knob.classList.add("is-pulse");
+          const hint = stickArea.querySelector(".axisHint");
+          if (hint){
+            hint.classList.add("is-flash");
+            setTimeout(() => hint.classList.remove("is-flash"), 450);
+          }
+          setTimeout(() => knob.classList.remove("is-pulse"), 600);
+        }
+        setStickIdle(false);
+        stopIdleKnob();
+        activePointerId = e.pointerId;
+        stickArea.setPointerCapture(activePointerId);
+        const { nx, ny } = pointerToNorm(e);
+        setKnob(nx, ny);
+        sendOrbit(nx, ny);
+      }
+
+      function onPointerMove(e){
+        if (activePointerId === null || e.pointerId !== activePointerId) return;
+        const { nx, ny } = pointerToNorm(e);
+        setKnob(nx, ny);
+        sendOrbit(nx, ny);
+      }
+
+      function onPointerUp(e){
+        if (activePointerId === null || e.pointerId !== activePointerId) return;
+        stickArea.releasePointerCapture(activePointerId);
+        activePointerId = null;
+        setKnob(0, 0);
+        setStickIdle(true);
+        startIdleKnob();
+        sendOrbit(0, 0);
+      }
+
+      // --- Idle knob animation ---
+      let idleRaf = null;
+      let idleT0 = 0;
+
+      function stopIdleKnob(){
+        if (idleRaf) cancelAnimationFrame(idleRaf);
+        idleRaf = null;
+      }
+
+      function startIdleKnob(){
+        stopIdleKnob();
+        idleT0 = performance.now();
+        const cycle = 4200; // ms
+
+        function tick(t){
+          // nur wenn wirklich idle:
+          if (!stickArea.classList.contains("is-idle") || activePointerId !== null) {
+            idleRaf = requestAnimationFrame(tick);
+            return;
+          }
+
+          const p = ((t - idleT0) % cycle) / cycle; // 0..1
+          // kleine "push & return" Bewegung (subtil)
+          const bump = Math.sin(p * Math.PI * 2) * 0.03; // minimale Skalierung
+          const scale = 1 + bump;
+          setKnob(0, 0, scale);
+          idleRaf = requestAnimationFrame(tick);
+        }
+
+        idleRaf = requestAnimationFrame(tick);
+      }
+
+      stickArea.addEventListener("pointerdown", onPointerDown);
+      stickArea.addEventListener("pointermove", onPointerMove);
+      stickArea.addEventListener("pointerup", onPointerUp);
+      stickArea.addEventListener("pointercancel", onPointerUp);
+
+      // --- Zoom slider ---
+      let lastZoomSend = 0;
+      async function sendZoom(value){
+        const now = performance.now();
+        if (now - lastZoomSend < 80) return;
+        lastZoomSend = now;
+        try {
+          await fetch("/api/control/zoom", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({ zoom: value })
+          });
+        } catch {}
+      }
+
+      zoomSlider.addEventListener("input", (e) => {
+        const v = Number(e.target.value) / 100;
+        console.log("zoom slider", v);
+        sendZoom(v);
+      });
+
+      // --- Vertical pan slider (hold position to pan) ---
+      let lastPanSend = 0;
+      let panLoopTimer = null;
+      let panValue = 0;
+
+      async function sendPan(value){
+        const now = performance.now();
+        if (now - lastPanSend < 50) return;
+        lastPanSend = now;
+        try {
+          await fetch("/api/control/pan", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({ dy: value })
+          });
+        } catch {}
+      }
+
+      function startPanLoop(){
+        if (panLoopTimer) return;
+        panLoopTimer = setInterval(() => sendPan(panValue), 50);
+      }
+
+      function stopPanLoop(){
+        if (!panLoopTimer) return;
+        clearInterval(panLoopTimer);
+        panLoopTimer = null;
+      }
+
+      function resetPanSlider(){
+        if (panSlider) panSlider.value = "0";
+        panValue = 0;
+        stopPanLoop();
+        sendPan(0);
+      }
+
+      if (panSlider) {
+        panSlider.addEventListener("input", (e) => {
+          const v = Number(e.target.value) / 100;
+          panValue = v;
+          if (Math.abs(panValue) > 0.001) {
+            startPanLoop();
+            sendPan(panValue);
+          } else {
+            stopPanLoop();
+            sendPan(0);
+          }
+        });
+
+        ["change", "pointerup", "pointercancel", "touchend", "mouseup"].forEach((evt) => {
+          panSlider.addEventListener(evt, resetPanSlider);
+        });
+      }
+
+      btnReset.addEventListener("click", async () => {
+        zoomSlider.value = "50";
+        resetPanSlider();
+        try {
+          await fetch("/api/control/reset", { method: "POST" });
+        } catch {}
+      });
+
+      // initial knob center
+      setKnob(0,0);
+      setMode("idle");
+
+      // --- Idle hint handling for stick ---
+      stickArea.classList.add("is-idle");
+
+      function setStickIdle(on){
+        stickArea.classList.toggle("is-idle", on);
+      }
+
+      startIdleKnob();
+    </script>
+  </body>
+</html>

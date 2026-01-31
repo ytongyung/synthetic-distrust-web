@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1080 1920">
+  <defs>
+    <clipPath id="clippath">
+      <rect x="36.45" y="456.45" width="1007.1" height="1007.1" fill="none"/>
+    </clipPath>
+  </defs>
+  <g id="underlay_lines">
+    <line x1="128.91" y1="-2.88" x2="128.91" y2="1926.11" fill="none" stroke="#e6007e" stroke-miterlimit="10" stroke-width="1.2"/>
+    <line x1="154.87" y1="-2.28" x2="154.87" y2="1926.71" fill="none" stroke="#e6007e" stroke-miterlimit="10" stroke-width="1.2"/>
+    <line x1="-6.86" y1="1839.95" x2="1091.96" y2="1839.95" fill="none" stroke="#e6007e" stroke-miterlimit="10" stroke-width="1.2"/>
+    <line x1="128.88" y1="1812.92" x2="331.08" y2="1812.92" fill="none" stroke="#e6007e" stroke-miterlimit="10" stroke-width="1.2"/>
+    <line x1="-.88" y1="658.52" x2="989.22" y2="658.52" fill="none" stroke="#e6007e" stroke-miterlimit="10" stroke-width="1.2"/>
+    <line x1="988.78" y1="658.87" x2="988.78" y2="1919.08" fill="none" stroke="#e6007e" stroke-miterlimit="10" stroke-width="1.2"/>
+    <line x1="745.57" y1=".55" x2="745.57" y2="1842.9" fill="none" stroke="#e6007e" stroke-miterlimit="10" stroke-width="1.2"/>
+    <line x1="128.03" y1="670.2" x2="988.46" y2="671.49" fill="none" stroke="#e6007e" stroke-miterlimit="10" stroke-width="1.2"/>
+    <line x1="182.14" y1="657.64" x2="182.14" y2="1813.73" fill="none" stroke="#e6007e" stroke-miterlimit="10" stroke-width="1.2"/>
+    <line x1="745.21" y1="699.43" x2="1605.65" y2="700.72" fill="none" stroke="#e6007e" stroke-miterlimit="10" stroke-width="1.2"/>
+    <line x1="331.49" y1="825.08" x2="331.49" y2="1919.62" fill="none" stroke="#e6007e" stroke-miterlimit="10" stroke-width="1.2"/>
+    <line x1="744.01" y1="27.37" x2="1082.41" y2="27.37" fill="none" stroke="#e6007e" stroke-miterlimit="10" stroke-width="1.2"/>
+    <line x1="182.2" y1="826.36" x2="1214.99" y2="826.36" fill="none" stroke="#e6007e" stroke-miterlimit="10" stroke-width="1.2"/>
+    <line x1="153.86" y1="93.68" x2="1186.65" y2="93.68" fill="none" stroke="#e6007e" stroke-miterlimit="10" stroke-width="1.2"/>
+    <line x1="126.89" y1="310.21" x2="1116.99" y2="310.21" fill="none" stroke="#e6007e" stroke-miterlimit="10" stroke-width="1.2"/>
+  </g>
+  <g id="underlay_circle">
+    <g clip-path="url(#clippath)" fill="none">
+      <circle cx="540" cy="960" r="503.15" fill="none" stroke="#e5007d" stroke-width="1.2"/>
+    </g>
+  </g>
+  <g id="underlay_dots">
+    <circle cx="745.66" cy="192.58" r="13.06" stroke="#e5007d" stroke-miterlimit="10" stroke-width="1.2"/>
+    <circle cx="331.65" cy="1760.68" r="13.06" stroke="#e5007d" stroke-miterlimit="10" stroke-width="1.2"/>
+    <circle cx="842.56" cy="27.51" r="13.06" stroke="#e5007d" stroke-miterlimit="10" stroke-width="1.2"/>
+    <circle cx="128.88" cy="310.67" r="13.06" stroke="#e5007d" stroke-miterlimit="10" stroke-width="1.2"/>
+    <circle cx="1036.51" cy="1840.71" r="13.06" stroke="#e5007d" stroke-miterlimit="10" stroke-width="1.2"/>
+  </g>
+</svg>

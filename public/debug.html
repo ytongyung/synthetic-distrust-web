@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Debug</title>
+  <style>
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: #fff;
+      color: #e6007e;
+    }
+    body {
+      min-height: 100vh;
+      font-size: 180%;
+    }
+    #debugOverlay{
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+    }
+    :root { --overlayStroke: #e5007d; --lineWidth: 2px; --minFrac: 0.35; }
+
+    /* Mount so skalieren wie dein img bisher */
+    #overlayMount svg{
+      position:absolute;
+      inset:0;
+      margin:auto;
+      width: 100vw;
+      height: 100vh;
+      display:block;
+    }
+
+    /* Draw-Loop */
+    #debugOverlay .draw-loop{
+      stroke: var(--overlayStroke);
+      stroke-width: var(--lineWidth);
+      opacity: 1;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+
+      stroke-dashoffset: 0;
+      stroke-dasharray: var(--minLen) var(--restMin);
+
+      animation: drawLen var(--dur) cubic-bezier(.45,0,.2,1) infinite alternate;
+      animation-delay: var(--delay);
+      will-change: stroke-dasharray;
+    }
+
+    #debugOverlay .circle-static{
+      stroke: var(--overlayStroke);
+      stroke-width: var(--lineWidth);
+      opacity: 1;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Dots NICHT animieren (wie bei dir) */
+    #debugOverlay #overlay_dots circle{
+      fill: #ffffff;
+      stroke: #e5007d;
+      stroke-width: var(--lineWidth);
+      opacity: 1;
+    }
+
+    @keyframes drawLen{
+      from{ stroke-dasharray: var(--minLen) var(--restMin); }
+      to{   stroke-dasharray: var(--maxLen) var(--restMax); }
+    }
+    #app{
+      position: relative;
+      z-index: 20;
+    }
+  </style>
+</head>
+<body>
+  <div id="debugOverlay" aria-hidden="true">
+    <div id="overlayMount"></div>
+  </div>
+  <div id="app"></div>
+  <script type="module" src="/debug.js"></script>
+</body>
+</html>
