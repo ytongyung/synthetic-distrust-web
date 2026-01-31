@@ -118,9 +118,8 @@
     }
     body.is-waiting #generationStatus{ display:block; }
     #generationTitle{
-      font-size:18px;
-      letter-spacing:0.6px;
-      text-transform:uppercase;
+      font-size:22.7px;
+      letter-spacing:0.2px;
       margin-bottom:8px;
     }
     #generationTimer{
@@ -331,7 +330,7 @@
         <canvas id="placeholder3d"></canvas>
         <canvas id="placeholder"></canvas>
         <div id="generationStatus" aria-live="polite">
-          <div id="generationTitle">Generating Hyperreality</div>
+          <div id="generationTitle">Revealing Simulation</div>
           <div id="generationTimer">01:00</div>
           <div class="progressTrack">
             <div id="generationProgress" class="progressFill"></div>
@@ -767,7 +766,7 @@
       const ts = parseCreatedAt(meta);
       const tsLine = document.createElement("div");
       tsLine.className = "prompt-timestamp";
-      tsLine.textContent = ts ? ts.toLocaleString() : "—";
+      tsLine.textContent = ts ? `Generated: ${ts.toLocaleString()}` : "Generated: —";
 
       metaEl.appendChild(label);
       metaEl.appendChild(body);
