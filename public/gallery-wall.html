@@ -478,8 +478,13 @@
       loadOverlaySvg(url);
     }
 
+    function withCacheBust(url){
+      const sep = url.includes("?") ? "&" : "?";
+      return `${url}${sep}v=${Date.now()}`;
+    }
+
     async function loadOverlaySvg(url){
-      const r = await fetch(url);
+      const r = await fetch(withCacheBust(url));
       const svgText = await r.text();
       overlayMount.innerHTML = svgText;
 
