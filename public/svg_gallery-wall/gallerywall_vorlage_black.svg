@@ -23,10 +23,10 @@
     <circle cx="528.5" cy="955.5" r="499" fill="none" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
   </g>
   <g id="overlay_dots">
-    <circle cx="970.67" cy="1763.38" r="13.06" fill="#fff" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
-    <circle cx="233.77" cy="1880.15" r="13.06" fill="#fff" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
-    <circle cx="114.27" cy="235.2" r="13.06" fill="#fff" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
-    <circle cx="113.61" cy="461.72" r="13.06" fill="#fff" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
-    <circle cx="890.28" cy="45.46" r="13.06" fill="#fff" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <circle cx="970.67" cy="1763.38" r="13.06" fill="#000" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <circle cx="233.77" cy="1880.15" r="13.06" fill="#000" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <circle cx="114.27" cy="235.2" r="13.06" fill="#000" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <circle cx="113.61" cy="461.72" r="13.06" fill="#000" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
+    <circle cx="890.28" cy="45.46" r="13.06" fill="#000" stroke="#e5007d" stroke-miterlimit="10" stroke-width=".8"/>
   </g>
 </svg>
