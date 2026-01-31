@@ -11,8 +11,8 @@ services:
         value: production
       - key: REPLICATE_API_TOKEN
         sync: false
-    # Uncomment to persist generated images across deploys/restarts
-    # disk:
-    #   name: out
-    #   mountPath: /opt/render/project/src/out
-    #   sizeGB: 1
+    # Persist generated images across deploys/restarts
+    disk:
+      name: out
+      mountPath: /opt/render/project/src/out
+      sizeGB: 1
