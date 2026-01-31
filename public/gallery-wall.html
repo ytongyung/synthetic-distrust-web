@@ -104,6 +104,34 @@
     .frame.is-waiting canvas#placeholder3d{ display:block; }
     .frame.is-waiting canvas#placeholder{ display:block; }
 
+    #generationBubble{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%, -50%);
+      z-index:60;
+      display:none;
+      flex-direction:column;
+      gap:6px;
+      padding:14px 22px;
+      border-radius:999px;
+      background:#fff;
+      border:2px solid #e6007e;
+      color:#e6007e;
+      text-align:center;
+      font-family:"GeistRegular", system-ui, sans-serif;
+      box-shadow:0 4px 14px rgba(230, 0, 126, 0.12);
+    }
+    body.is-waiting #generationBubble{ display:flex; }
+    #generationBubble .gen-title{
+      font-size:20px;
+      letter-spacing:0.2px;
+    }
+    #generationBubble .gen-time{
+      font-size:16px;
+      opacity:0.9;
+    }
+
     .meta{
       font-size:18px;
       line-height:1.25;
@@ -129,6 +157,18 @@
     .prompt-body{
       font-family:"GeistRegular", system-ui, sans-serif;
       font-size:32.4px;
+    }
+    .prompt-timestamp{
+      display:inline-block;
+      margin-top:10px;
+      padding:6px 14px;
+      border:2px solid #e6007e;
+      border-radius:999px;
+      background:#fff;
+      color:#e6007e;
+      font-family:"GeistRegular", system-ui, sans-serif;
+      font-size:22.7px; /* ~30% smaller than prompt-body */
+      line-height:1.2;
     }
 
 
@@ -282,6 +322,10 @@
       <div id="frame" class="frame is-waiting">
         <canvas id="placeholder3d"></canvas>
         <canvas id="placeholder"></canvas>
+        <div id="generationBubble" aria-live="polite">
+          <div class="gen-title">Image is being generated</div>
+          <div class="gen-time">time relapse: <span id="generationElapsed">00:00</span></div>
+        </div>
         <img id="img" alt="" />
       </div>
       <div id="meta" class="meta"></div>
@@ -302,6 +346,8 @@
     import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
     const canvas3d = document.getElementById("placeholder3d");
+    const generationBubble = document.getElementById("generationBubble");
+    const generationElapsed = document.getElementById("generationElapsed");
     const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, alpha: true, antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio || 1);
     renderer.setClearColor(0x000000, 0);
@@ -533,6 +579,11 @@
 
       const draw = (t) => {
         const elapsed = (t - placeholderStart) / 1000;
+        if (generationElapsed){
+          const mins = Math.floor(elapsed / 60);
+          const secs = Math.floor(elapsed % 60);
+          generationElapsed.textContent = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+        }
         const w = placeholder.width / dpr;
         const h = placeholder.height / dpr;
 
@@ -669,8 +720,7 @@
 
       const ts = parseCreatedAt(meta);
       const tsLine = document.createElement("div");
-      tsLine.className = "prompt-body";
-      tsLine.style.marginTop = "10px";
+      tsLine.className = "prompt-timestamp";
       tsLine.textContent = ts
         ? `Generated: ${ts.toLocaleString()}`
         : "Generated: —";
