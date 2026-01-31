@@ -681,7 +681,11 @@
     function setSpotlight(on){
       document.body.classList.toggle("is-spotlight", on);
       document.documentElement.classList.toggle("is-spotlight", on);
-      setOverlay(on ? "pink" : "default");
+      if (!on && document.body.classList.contains("is-waiting")){
+        setOverlay("waiting");
+      } else {
+        setOverlay(on ? "pink" : "default");
+      }
     }
 
     function setFeatured(file){
