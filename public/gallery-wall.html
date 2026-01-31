@@ -22,6 +22,7 @@
 
     html, body { margin:0; height:100%; background:#fff; }
     html.is-spotlight{ background:#e6007e; }
+    body.is-waiting, html.is-waiting{ background:#000; }
     body{
       font-family:"GeistRegular", system-ui, sans-serif;
       overflow:hidden;
@@ -104,33 +105,39 @@
     .frame.is-waiting canvas#placeholder3d{ display:block; }
     .frame.is-waiting canvas#placeholder{ display:block; }
 
-    #generationBubble{
+    #generationStatus{
       position:absolute;
       left:50%;
       top:50%;
       transform:translate(-50%, -50%);
       z-index:60;
       display:none;
-      flex-direction:column;
-      gap:6px;
-      padding:14px 22px;
-      border-radius:999px;
-      background:#fff;
-      border:2px solid #e6007e;
-      color:#e6007e;
       text-align:center;
+      color:#fff;
       font-family:"GeistRegular", system-ui, sans-serif;
-      box-shadow:0 4px 14px rgba(230, 0, 126, 0.12);
     }
-    body.is-waiting #generationBubble{ display:flex; }
-    #generationBubble .gen-title{
-      font-size:20px;
-      letter-spacing:0.2px;
+    body.is-waiting #generationStatus{ display:block; }
+    #generationTimer{
+      font-size:28px;
+      letter-spacing:0.5px;
+      margin-bottom:12px;
     }
-    #generationBubble .gen-time{
-      font-size:16px;
-      opacity:0.9;
+    .progressTrack{
+      width:220px;
+      height:6px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.25);
+      overflow:hidden;
+      margin:0 auto;
     }
+    .progressFill{
+      height:100%;
+      width:0%;
+      background:#fff;
+      border-radius:999px;
+      transition:width 120ms linear;
+    }
+
 
     .meta{
       font-size:18px;
@@ -157,18 +164,6 @@
     .prompt-body{
       font-family:"GeistRegular", system-ui, sans-serif;
       font-size:32.4px;
-    }
-    .prompt-timestamp{
-      display:inline-block;
-      margin-top:10px;
-      padding:6px 14px;
-      border:2px solid #e6007e;
-      border-radius:999px;
-      background:#fff;
-      color:#e6007e;
-      font-family:"GeistRegular", system-ui, sans-serif;
-      font-size:22.7px; /* ~30% smaller than prompt-body */
-      line-height:1.2;
     }
 
 
@@ -322,9 +317,11 @@
       <div id="frame" class="frame is-waiting">
         <canvas id="placeholder3d"></canvas>
         <canvas id="placeholder"></canvas>
-        <div id="generationBubble" aria-live="polite">
-          <div class="gen-title">Image is being generated</div>
-          <div class="gen-time">time relapse: <span id="generationElapsed">00:00</span></div>
+        <div id="generationStatus" aria-live="polite">
+          <div id="generationTimer">01:00</div>
+          <div class="progressTrack">
+            <div id="generationProgress" class="progressFill"></div>
+          </div>
         </div>
         <img id="img" alt="" />
       </div>
@@ -346,8 +343,8 @@
     import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
     const canvas3d = document.getElementById("placeholder3d");
-    const generationBubble = document.getElementById("generationBubble");
-    const generationElapsed = document.getElementById("generationElapsed");
+    const generationTimer = document.getElementById("generationTimer");
+    const generationProgress = document.getElementById("generationProgress");
     const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, alpha: true, antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio || 1);
     renderer.setClearColor(0x000000, 0);
@@ -428,6 +425,34 @@
     const SWIPE_MS = 820;
     let placeholderRaf = null;
     let placeholderStart = 0;
+    const GEN_DURATION_MS = 60_000;
+    let genRaf = null;
+    let genStart = 0;
+
+    function formatCountdown(ms){
+      const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    function stopGenTimer(){
+      if (genRaf) cancelAnimationFrame(genRaf);
+      genRaf = null;
+    }
+
+    function tickGenTimer(){
+      const elapsed = performance.now() - genStart;
+      const remaining = GEN_DURATION_MS - elapsed;
+      const clamped = Math.min(Math.max(elapsed / GEN_DURATION_MS, 0), 1);
+      if (generationProgress) generationProgress.style.width = `${Math.round(clamped * 100)}%`;
+      if (generationTimer) generationTimer.textContent = formatCountdown(remaining);
+      if (elapsed < GEN_DURATION_MS) {
+        genRaf = requestAnimationFrame(tickGenTimer);
+      } else {
+        genRaf = null;
+      }
+    }
     let spotlightTimer = null;
 
     function setOverlay(mode){
@@ -579,11 +604,6 @@
 
       const draw = (t) => {
         const elapsed = (t - placeholderStart) / 1000;
-        if (generationElapsed){
-          const mins = Math.floor(elapsed / 60);
-          const secs = Math.floor(elapsed % 60);
-          generationElapsed.textContent = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-        }
         const w = placeholder.width / dpr;
         const h = placeholder.height / dpr;
 
@@ -599,7 +619,7 @@
           const scale = 0.85 + 0.15 * Math.sin(phase);
           const radius = base * (1 + i * 0.45) * scale;
           const alpha = 0.75 - i * 0.18;
-          ctx.strokeStyle = `rgba(0, 0, 0, 1)`;
+          ctx.strokeStyle = `rgba(255, 255, 255, 1)`;
           ctx.lineWidth = Math.max(2.8, base * 0.072);
           ctx.beginPath();
           ctx.arc(cx, cy, radius, 0, Math.PI * 2);
@@ -622,13 +642,25 @@
       const ctx = placeholder.getContext("2d");
       ctx.clearRect(0, 0, placeholder.width, placeholder.height);
       window.removeEventListener("resize", resizePlaceholder);
+      stopGenTimer();
     }
 
     function setWaiting(on){
       frame.classList.toggle("is-waiting", on);
       if (on) frame.classList.remove("is-featured");
       document.body.classList.toggle("is-waiting", on);
+      document.documentElement.classList.toggle("is-waiting", on);
       if (on) setOverlay("default");
+      if (on){
+        genStart = performance.now();
+        if (generationProgress) generationProgress.style.width = "0%";
+        if (generationTimer) generationTimer.textContent = formatCountdown(GEN_DURATION_MS);
+        stopGenTimer();
+        genRaf = requestAnimationFrame(tickGenTimer);
+      } else {
+        stopGenTimer();
+        if (generationProgress) generationProgress.style.width = "0%";
+      }
     }
 
     function setSpotlight(on){
@@ -719,15 +751,9 @@
       body.textContent = values.filter(Boolean).join(", ");
 
       const ts = parseCreatedAt(meta);
-      const tsLine = document.createElement("div");
-      tsLine.className = "prompt-timestamp";
-      tsLine.textContent = ts
-        ? `Generated: ${ts.toLocaleString()}`
-        : "Generated: —";
 
       metaEl.appendChild(label);
       metaEl.appendChild(body);
-      metaEl.appendChild(tsLine);
     }
 
     async function fetchImages(){
