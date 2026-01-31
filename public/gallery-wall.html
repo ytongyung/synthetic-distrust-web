@@ -614,7 +614,7 @@
       return Boolean(meta.gossip || meta.places || meta.people || meta.atmosphere || meta.style);
     }
 
-    const CUTOFF_DATE = new Date(2026, 0, 13);
+    const CUTOFF_DATE = new Date(2026, 0, 10);
 
     function parseCreatedAt(meta){
       if (!meta) return null;
@@ -641,7 +641,7 @@
 
     function isOnOrAfterCutoff(meta){
       const d = parseCreatedAt(meta);
-      return d ? d > CUTOFF_DATE : false;
+      return d ? d >= CUTOFF_DATE : false;
     }
 
     function renderMeta(meta){
