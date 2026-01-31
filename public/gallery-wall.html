@@ -667,8 +667,17 @@
       body.className = "prompt-body";
       body.textContent = values.filter(Boolean).join(", ");
 
+      const ts = parseCreatedAt(meta);
+      const tsLine = document.createElement("div");
+      tsLine.className = "prompt-body";
+      tsLine.style.marginTop = "10px";
+      tsLine.textContent = ts
+        ? `Generated: ${ts.toLocaleString()}`
+        : "Generated: —";
+
       metaEl.appendChild(label);
       metaEl.appendChild(body);
+      metaEl.appendChild(tsLine);
     }
 
     async function fetchImages(){
