@@ -471,7 +471,9 @@
     function setOverlay(mode){
       const url = mode === "pink"
         ? "./svg_gallery-wall/gallerywall_vorlage_pink.svg"
-        : "./svg_gallery-wall/gallerywall_vorlage_01.svg";
+        : mode === "waiting"
+          ? "./svg_gallery-wall/gallerywall_vorlage_black.svg"
+          : "./svg_gallery-wall/gallerywall_vorlage_01.svg";
 
       loadOverlaySvg(url);
     }
@@ -663,7 +665,7 @@
       if (on) frame.classList.remove("is-featured");
       document.body.classList.toggle("is-waiting", on);
       document.documentElement.classList.toggle("is-waiting", on);
-      if (on) setOverlay("default");
+      if (on) setOverlay("waiting");
       if (on){
         genStart = performance.now();
         if (generationProgress) generationProgress.style.width = "0%";
