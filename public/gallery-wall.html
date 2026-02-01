@@ -76,10 +76,12 @@
       z-index:2;
       transform:translateY(-12%) scale(0.7);
       transform-origin:center;
+      opacity:0;
+      transition:opacity 260ms ease;
     }
     body.is-spotlight #img{ background:transparent; }
     body.is-spotlight #img{ border-radius:0; }
-    .frame.is-featured #img{ display:block; }
+    .frame.is-featured #img{ display:block; opacity:1; }
 
     /* Optionaler Placeholder (wenn keine Bilder da sind) */
     canvas#placeholder3d{
@@ -212,6 +214,7 @@
       stroke-dasharray: var(--minLen) var(--restMin);
       stroke-dashoffset: 0;
       animation: drawClassic var(--dur, 6.5s) linear var(--delay, 0s) infinite alternate;
+      stroke: var(--overlayStroke);
       stroke-linecap: round;
       stroke-linejoin: round;
     }
@@ -437,6 +440,13 @@
     const placeholder = document.getElementById("placeholder");
     const overlayMount = document.getElementById("overlayMount");
 
+    img.addEventListener("load", () => {
+      img.style.opacity = "1";
+    });
+    img.addEventListener("error", () => {
+      img.style.opacity = "0";
+    });
+
     let slideshowTimer = null;
     let slideshowIndex = 0;
     let slideshowList = [];
@@ -510,9 +520,7 @@
       const circleStrokeWidth = circle
         ? (circle.getAttribute("stroke-width") || circleStyle.strokeWidth)
         : null;
-      const circleStroke = circle
-        ? (circle.getAttribute("stroke") || circleStyle.stroke)
-        : null;
+      const circleStroke = "var(--overlayStroke)";
       const forcedStrokeWidth = "2";
 
       // Dots: keine eigene Animation – Sichtbarkeit kommt nur durch die Linien-Maske
@@ -529,7 +537,8 @@
         circle.classList.add("circle-static");
         circle.style.animation = "none";
         circle.style.strokeWidth = forcedStrokeWidth;
-        if (circleStroke) circle.style.stroke = circleStroke;
+        circle.style.stroke = circleStroke;
+        circle.style.filter = "none";
       }
 
       // Lines: Draw-Loop, versetzt
@@ -541,8 +550,9 @@
         el.style.animation = "";
         el.style.animationDelay = "";
         el.style.fill = "none";
-        if (circleStroke) el.style.stroke = circleStroke;
+        el.style.stroke = circleStroke;
         el.style.strokeWidth = forcedStrokeWidth;
+        el.style.filter = "none";
 
         const len = el.getTotalLength();
         el.classList.add("draw-classic");
@@ -701,6 +711,7 @@
     function setFeatured(file){
       frame.classList.add("is-featured");
       frame.classList.remove("is-waiting");
+      img.style.opacity = "0";
       img.src = `/out/${encodeURIComponent(file)}?t=${Date.now()}`;
 
       const panel = frame.closest(".panel");
