@@ -62,7 +62,11 @@ function listImages() {
   if (!fs.existsSync(outDir)) return []
 
   const files = fs.readdirSync(outDir)
-  return files.filter(f => /\.(png|jpe?g|webp)$/i.test(f)).sort().reverse()
+  return files
+    .filter(f => /\.(png|jpe?g|webp)$/i.test(f))
+    .filter(f => !f.startsWith("._") && f !== ".DS_Store")
+    .sort()
+    .reverse()
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -229,6 +233,14 @@ app.post("/api/generate", async (req, res) => {
     }
 
     console.error("api generate error", e && e.stack ? e.stack : e);
+
+    // Fallback auf vorhandenes Bild, falls moeglich
+    const fb = pickFallbackFromOut();
+    if (fb) {
+      const file = await simulateRun({ runId, fallback: fb });
+      return res.status(200).json({ ok: true, runId, file, simulated: true, reason: "error_fallback" });
+    }
+
     broadcast({ type: "run_error", runId, error: String(e) });
     return res.status(500).json({ ok: false, error: String(e), runId });
   }
@@ -326,6 +338,13 @@ app.post("/api/mutate", async (req, res) => {
     if (breaker.failCount >= 2) tripBreaker(2 * 60_000)
 
     console.error("api mutate error", e && e.stack ? e.stack : e)
+
+    const fb = pickFallbackFromOut()
+    if (fb) {
+      const file = await simulateRun({ runId, fallback: fb })
+      return res.status(200).json({ ok: true, runId, file, simulated: true, reason: "error_fallback" })
+    }
+
     broadcast({ type: "run_error", runId, error: String(e) })
     return res.status(500).json({ ok: false, error: String(e), runId })
   }
