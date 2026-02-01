@@ -822,6 +822,7 @@
       setSpotlight(false);
 
       const tick = async () => {
+        if (!slideshowList.length) return;
         if (slideshowIndex >= slideshowList.length){
           for (let i = slideshowList.length - 1; i > 0; i--){
             const j = Math.floor(Math.random() * (i + 1));
@@ -829,10 +830,28 @@
           }
           slideshowIndex = 0;
         }
-        const file = slideshowList[slideshowIndex];
-        slideshowIndex++;
-        setFeatured(file);
-        renderMeta(await loadMeta(file));
+
+        let guard = 0;
+        while (slideshowList.length && guard++ < slideshowList.length){
+          const file = slideshowList[slideshowIndex];
+          slideshowIndex++;
+          if (slideshowIndex >= slideshowList.length) slideshowIndex = 0;
+
+          // skip missing images (avoid rapid flicker on 404)
+          const ok = await fetch(`/out/${encodeURIComponent(file)}?t=${Date.now()}`, { method: "HEAD" })
+            .then(r => r.ok)
+            .catch(() => false);
+
+          if (!ok){
+            const idx = slideshowList.indexOf(file);
+            if (idx !== -1) slideshowList.splice(idx, 1);
+            continue;
+          }
+
+          setFeatured(file);
+          renderMeta(await loadMeta(file));
+          return;
+        }
       };
 
       await tick();
