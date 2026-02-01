@@ -232,8 +232,8 @@
       opacity: 1;
     }
     body.is-waiting #screenOverlay #overlay_dots circle{
-      fill: #000000;
-      stroke: #e6007e;
+      fill: #000000 !important;
+      stroke: #e6007e !important;
     }
     body.is-spotlight #screenOverlay #overlay_dots circle{
       fill: #e6007e !important;
@@ -840,7 +840,7 @@
       slideshowTimer = setInterval(tick, 5000);
     }
 
-    async function showFeaturedForAWhile(file){
+    async function showFeaturedForAWhile(file, ts){
       clearInterval(slideshowTimer);
       slideshowTimer = null;
       if (spotlightTimer){
@@ -853,8 +853,10 @@
       setFeatured(file);
       renderMeta(await loadMeta(file));
 
-      // nach 9s wieder in die Slideshow zurück
-      spotlightTimer = setTimeout(() => startSlideshow(), 9000);
+      // nach 9s (synchronisiert mit Server-Timestamp) zurück
+      const baseTs = typeof ts === "number" ? ts : Date.now();
+      const remaining = Math.max(0, baseTs + 9000 - Date.now());
+      spotlightTimer = setTimeout(() => startSlideshow(), remaining);
     }
 
     // SSE: wenn ein neues Bild generiert wurde, kurz spotlighten
@@ -866,6 +868,7 @@
       if (msg.type === "run_start"){
         setWaiting(true);
         setSpotlight(false);
+        setOverlay("waiting");
         clearInterval(slideshowTimer);
         slideshowTimer = null;
         startPlaceholder();
@@ -874,7 +877,7 @@
 
       if (msg.type === "run_done" && msg.file){
         stopPlaceholder();
-        showFeaturedForAWhile(msg.file);
+        showFeaturedForAWhile(msg.file, msg.ts);
       }
     };
 
