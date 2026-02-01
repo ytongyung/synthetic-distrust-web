@@ -727,7 +727,7 @@
 
     const CUTOFF_DATE = new Date(2026, 0, 10);
 
-    function parseCreatedAt(meta){
+    function parseCreatedAt(meta, file){
       if (!meta) return null;
       const raw = meta.createdAt ?? meta.created_at ?? meta.created ?? meta.timestamp;
       if (!raw) return null;
@@ -747,17 +747,28 @@
           return Number.isNaN(d2.getTime()) ? null : d2;
         }
       }
+      // fallback: filename timestamp like img_1766153784626.png
+      if (typeof file === "string"){
+        const m = file.match(/img_(\d{10,})/);
+        if (m){
+          const ms = Number(m[1]);
+          if (Number.isFinite(ms)) {
+            const d = new Date(ms);
+            return Number.isNaN(d.getTime()) ? null : d;
+          }
+        }
+      }
       return null;
     }
 
-    function isOnOrAfterCutoff(meta){
-      const d = parseCreatedAt(meta);
+    function isOnOrAfterCutoff(meta, file){
+      const d = parseCreatedAt(meta, file);
       return d ? d >= CUTOFF_DATE : false;
     }
 
-    function renderMeta(meta){
+    function renderMeta(meta, file){
       metaEl.textContent = "";
-      if (!meta) return;
+      if (!meta && !file) return;
 
       const person = meta.person ?? meta.people ?? "";
       const place = meta.place ?? meta.places ?? "";
@@ -778,7 +789,7 @@
       body.className = "prompt-body";
       body.textContent = values.filter(Boolean).join(", ");
 
-      const ts = parseCreatedAt(meta);
+      const ts = parseCreatedAt(meta, file);
       const tsLine = document.createElement("div");
       tsLine.className = "prompt-timestamp";
       tsLine.textContent = ts ? `Generated: ${ts.toLocaleString()}` : "Generated: —";
@@ -796,8 +807,8 @@
       // keep deine Eligibility-Checks (Prompt + Datum)
       const checks = await Promise.all(candidates.map(async (f) => {
         const meta = await loadMeta(f);
-        if (!hasPrompt(meta)) return null;
-        if (!isOnOrAfterCutoff(meta)) return null;
+        if (meta && !hasPrompt(meta)) return null;
+        if (!isOnOrAfterCutoff(meta, f)) return null;
         return f;
       }));
 
@@ -832,7 +843,7 @@
         const file = slideshowList[slideshowIndex];
         slideshowIndex++;
         setFeatured(file);
-        renderMeta(await loadMeta(file));
+        renderMeta(await loadMeta(file), file);
       };
 
       await tick();
