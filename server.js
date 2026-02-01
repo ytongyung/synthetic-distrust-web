@@ -69,6 +69,14 @@ function listImages() {
     .reverse()
 }
 
+function listImagesWithMeta() {
+  const imgs = listImages()
+  return imgs.filter((img) => {
+    const json = img.replace(/\.(png|jpe?g|webp)$/i, ".json")
+    return fs.existsSync(path.join(outDir, json))
+  })
+}
+
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 function pickFallbackFromOut() {
@@ -116,7 +124,7 @@ async function simulateRun({ runId, fallback }) {
 }
 
 app.get("/api/images", (req, res) => {
-  res.json({ images: listImages() })
+  res.json({ images: listImagesWithMeta() })
 })
 
 const clients = new Set()
