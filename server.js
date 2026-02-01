@@ -2,7 +2,7 @@ import express from "express"
 import path from "path"
 import fs from "fs"
 import { fileURLToPath } from "url"
-import { generateOne } from "./index.js"
+import { generateOne, generatePrompt } from "./index.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -140,6 +140,20 @@ app.get("/api/stream", (req, res) => {
   req.on("close", () => clients.delete(res))
 })
 
+app.post("/api/prompt", (req, res) => {
+  try {
+    const result = generatePrompt({
+      parentMeta: req.body?.parentMeta || null,
+      parentFile: req.body?.parentFile || null,
+      mutationMode: req.body?.mutationMode || null
+    })
+    return res.json({ ok: true, prompt: result.prompt, picked: result.picked })
+  } catch (e) {
+    console.error("api prompt error", e && e.stack ? e.stack : e)
+    return res.status(500).json({ ok: false, error: String(e) })
+  }
+})
+
 function broadcast(msg) {
   const data = `data: ${JSON.stringify(msg)}\n\n`
   for (const res of clients) res.write(data)
@@ -198,7 +212,9 @@ app.post("/api/generate", async (req, res) => {
       },
       parentMeta: req.body?.parentMeta,
       parentFile: req.body?.parentFile,
-      mutationMode: req.body?.mutationMode
+      mutationMode: req.body?.mutationMode,
+      promptOverride: req.body?.promptOverride,
+      pickedOverride: req.body?.pickedOverride
     }).then(file => ({ kind: "real", file }))
       .catch(error => ({ kind: "error", error }));
 

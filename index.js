@@ -196,6 +196,59 @@ function mutatePicked(base, lists, mode) {
   return { next, chosen }
 }
 
+function loadPromptLists() {
+  const atmosphereWords = readLines("prompts/atmosphere.txt")
+  const gossipWords = readLines("prompts/gossip.txt")
+  const peopleWords = readLines("prompts/people.txt")
+  const placesWords = readLines("prompts/places.txt")
+  const styleWords = readLines("prompts/style.txt")
+  return { atmosphereWords, gossipWords, peopleWords, placesWords, styleWords }
+}
+
+function pickPrompt(lists, { parentMeta = null, mutationMode = null, parentFile = null, emit = null } = {}) {
+  let picked
+  let mutationFields = []
+
+  if (parentMeta && mutationMode) {
+    const base = {
+      atmosphere: normalizeFromList(parentMeta.atmosphere, lists.atmosphereWords),
+      gossip: normalizeFromList(parentMeta.gossip, lists.gossipWords),
+      people: normalizeFromList(parentMeta.people, lists.peopleWords),
+      places: normalizeFromList(parentMeta.places, lists.placesWords),
+      style: normalizeFromList(parentMeta.style, lists.styleWords)
+    }
+
+    const { next, chosen } = mutatePicked(base, {
+      atmosphereWords: lists.atmosphereWords,
+      gossipWords: lists.gossipWords,
+      peopleWords: lists.peopleWords,
+      placesWords: lists.placesWords
+    }, mutationMode)
+
+    picked = next
+    mutationFields = chosen
+    emit?.("mutated", { mutationMode, mutationFields, parent: parentFile || null })
+  } else {
+    picked = {
+      atmosphere: pickOne(lists.atmosphereWords),
+      gossip: pickOne(lists.gossipWords),
+      people: pickOne(lists.peopleWords),
+      places: pickOne(lists.placesWords),
+      style: pickOne(lists.styleWords)
+    }
+  }
+
+  return { picked, mutationFields }
+}
+
+export function generatePrompt(opts = {}) {
+  const { parentMeta = null, mutationMode = null, parentFile = null } = opts
+  const lists = loadPromptLists()
+  const { picked, mutationFields } = pickPrompt(lists, { parentMeta, mutationMode, parentFile })
+  const prompt = buildPrompt(picked)
+  return { prompt, picked, mutationFields }
+}
+
 export async function generateOne(opts = {}) {
   const {
     runId = String(Date.now()),
@@ -203,7 +256,9 @@ export async function generateOne(opts = {}) {
     signal,
     parentMeta = null,
     mutationMode = null,
-    parentFile = null
+    parentFile = null,
+    promptOverride = null,
+    pickedOverride = null
   } = opts
 
   function throwIfAborted() {
@@ -228,50 +283,22 @@ export async function generateOne(opts = {}) {
   const replicate = new Replicate({ auth: token })
   const outDir = ensureOutDir()
 
-  const atmosphereWords = readLines("prompts/atmosphere.txt")
-  const gossipWords = readLines("prompts/gossip.txt")
-  const peopleWords = readLines("prompts/people.txt")
-  const placesWords = readLines("prompts/places.txt")
-  const styleWords = readLines("prompts/style.txt")
-
-  const lists = { atmosphereWords, gossipWords, peopleWords, placesWords, styleWords }
+  const lists = loadPromptLists()
 
   // optional: von Parent ableiten
   // parentMeta, mutationMode, parentFile come from params
 
-  let picked
-  let mutationFields = []
-
-  if (parentMeta && mutationMode) {
-    const base = {
-      atmosphere: normalizeFromList(parentMeta.atmosphere, atmosphereWords),
-      gossip: normalizeFromList(parentMeta.gossip, gossipWords),
-      people: normalizeFromList(parentMeta.people, peopleWords),
-      places: normalizeFromList(parentMeta.places, placesWords),
-      style: normalizeFromList(parentMeta.style, styleWords)
-    }
-
-    const { next, chosen } = mutatePicked(base, {
-      atmosphereWords,
-      gossipWords,
-      peopleWords,
-      placesWords
-    }, mutationMode)
-
-    picked = next
-    mutationFields = chosen
-    emit("mutated", { mutationMode, mutationFields, parent: parentFile || null })
-  } else {
-    picked = {
-      atmosphere: pickOne(atmosphereWords),
-      gossip: pickOne(gossipWords),
-      people: pickOne(peopleWords),
-      places: pickOne(placesWords),
-      style: pickOne(styleWords)
-    }
+  let { picked, mutationFields } = pickPrompt(lists, { parentMeta, mutationMode, parentFile, emit })
+  if (pickedOverride && typeof pickedOverride === "object") {
+    picked = pickedOverride
+    mutationFields = []
+  }
+  if (promptOverride && !pickedOverride) {
+    picked = { prompt: String(promptOverride) }
+    mutationFields = []
   }
 
-  const prompt = buildPrompt(picked)
+  const prompt = promptOverride ? String(promptOverride) : buildPrompt(picked)
   const headline = await generateHeadline(replicate, picked, emit)
   emit("headline_ready", { headline })
 

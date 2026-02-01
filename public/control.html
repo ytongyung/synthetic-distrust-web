@@ -104,6 +104,43 @@
         display: block;
       }
 
+      .promptPanel{
+        width: min(520px, 100%);
+        display: grid;
+        gap: 10px;
+        align-items: center;
+        justify-items: center;
+      }
+
+      .promptBox{
+        width: 100%;
+        min-height: 92px;
+        padding: 12px 14px;
+        box-sizing: border-box;
+        border: 1px solid var(--pink);
+        border-radius: 14px;
+        color: var(--pink);
+        background: rgba(255,255,255,0.85);
+        font-size: 14px;
+        line-height: 1.35;
+        white-space: pre-wrap;
+      }
+
+      .promptLike{
+        border: 1px solid var(--pink);
+        color: var(--pink);
+        background: transparent;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-size: 14px;
+        font-family: "GeistRegular", system-ui, sans-serif;
+        cursor: pointer;
+      }
+      .promptLike:disabled{
+        opacity: 0.4;
+        cursor: default;
+      }
+
       .genProgress{
         width: min(520px, 100%);
         margin: 0 auto 0;
@@ -512,6 +549,13 @@
       <div id="design">
         <div class="wrap">
           <div>
+            <div class="promptPanel">
+              <button id="btnPrompt" class="generate" type="button" aria-label="Generate Prompt">
+                <img src="./svg_control/Button_generatehyperreality_02.svg" alt="" />
+              </button>
+              <div id="promptBox" class="promptBox" aria-live="polite">Generate a prompt to begin.</div>
+              <button id="btnLike" class="promptLike" type="button" disabled>Like Prompt</button>
+            </div>
             <button id="btnGen" class="generate" type="button" aria-label="Generate Hyperreality">
               <img src="./svg_control/Button_generatehyperreality.svg" alt="" />
             </button>
@@ -576,6 +620,9 @@
     </div>
 
     <script>
+      const btnPrompt = document.getElementById("btnPrompt");
+      const btnLike = document.getElementById("btnLike");
+      const promptBox = document.getElementById("promptBox");
       const btnGen = document.getElementById("btnGen");
       const statusEl = document.getElementById("status");
       const genProgress = document.getElementById("genProgress");
@@ -730,6 +777,8 @@
       fit();
 
       let isGenerating = false;
+      let promptData = null;
+      let promptLocked = false;
       let lastSend = 0;
       let activePointerId = null;
       let hasTouchedOnce = false;
@@ -770,7 +819,6 @@
       }
       function setGenerating(on){
         isGenerating = on;
-        btnGen.disabled = on;
         if (on) {
           setMode("idle");
           setStatus("");
@@ -790,6 +838,25 @@
           progressFill.style.width = "0%";
           genTimer.textContent = formatCountdown(GEN_DURATION_MS);
         }
+        updatePromptUi();
+      }
+
+      function setPrompt(text, picked){
+        promptData = text ? { prompt: text, picked } : null;
+        promptBox.textContent = text || "Generate a prompt to begin.";
+        updatePromptUi();
+      }
+
+      function setPromptLocked(on){
+        promptLocked = on;
+        updatePromptUi();
+      }
+
+      function updatePromptUi(){
+        const hasPrompt = Boolean(promptData && promptData.prompt);
+        btnPrompt.disabled = isGenerating || promptLocked;
+        btnLike.disabled = isGenerating || promptLocked || !hasPrompt;
+        btnGen.disabled = isGenerating || !promptLocked;
       }
 
       async function apiGenerate(){
@@ -797,12 +864,29 @@
         const r = await fetch("/api/generate", {
           method: "POST",
           headers: {"Content-Type":"application/json"},
-          body: JSON.stringify({ runId })
+          body: JSON.stringify({
+            runId,
+            promptOverride: promptData?.prompt || null,
+            pickedOverride: promptData?.picked || null
+          })
         });
         const j = await r.json().catch(()=> ({}));
         if (!r.ok || !j.ok) throw new Error(j.error || "generate failed");
         return j;
       }
+
+      async function apiPrompt(){
+        const r = await fetch("/api/prompt", {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({})
+        });
+        const j = await r.json().catch(()=> ({}));
+        if (!r.ok || !j.ok) throw new Error(j.error || "prompt failed");
+        return j;
+      }
+
+      updatePromptUi();
 
       // --- SSE status (server broadcast) ---
       const es = new EventSource("/api/stream");
@@ -819,12 +903,33 @@
         }
         if (msg.type === "run_done" || msg.type === "run_error") {
           setGenerating(false);
+          setPromptLocked(false);
         }
       };
+
+      // --- Prompt flow ---
+      btnPrompt.addEventListener("click", async () => {
+        if (isGenerating || promptLocked) return;
+        setStatus("");
+        try {
+          const j = await apiPrompt();
+          setPrompt(j.prompt || "", j.picked || null);
+        } catch (e) {
+          setStatus("Error");
+          console.error(e);
+          setTimeout(() => setStatus(""), 1200);
+        }
+      });
+
+      btnLike.addEventListener("click", () => {
+        if (isGenerating || !promptData) return;
+        setPromptLocked(true);
+      });
 
       // --- Generate button ---
       btnGen.addEventListener("click", async () => {
         if (isGenerating) return;
+        if (!promptLocked) return;
         setStatus("");
         try {
           setGenerating(true); // optimistic
