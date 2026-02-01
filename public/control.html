@@ -96,7 +96,7 @@
 
       .promptPrimary{
         width: 100%;
-        border: 1.5px solid var(--pink);
+        border: 2px solid var(--pink);
         color: var(--pink);
         background: #000;
         border-radius: 999px;
@@ -116,7 +116,7 @@
         width: 100%;
         padding: 6px 0 2px;
         box-sizing: border-box;
-        color: var(--pink);
+        color: #fff;
         font-family: "GeistRegular", system-ui, sans-serif;
         font-size: 18px;
         line-height: 1.25;
@@ -131,24 +131,29 @@
       .promptActions{
         width: 100%;
         display: none;
-        gap: 10px;
+        gap: 12px;
         align-items: center;
         justify-items: center;
+        grid-template-columns: 1fr 1fr;
       }
       .promptActions.is-visible{
         display: grid;
       }
       .promptSecondary{
         width: 100%;
-        border: 1.5px solid var(--pink);
+        border: 2px solid var(--pink);
         color: var(--pink);
         background: #000;
         border-radius: 999px;
-        padding: 12px 16px;
-        font-size: 24px; /* ~70% larger */
+        padding: 10px 14px;
+        font-size: 20px;
         font-family: "RedactionItalic", system-ui, sans-serif;
         font-style: italic;
         cursor: pointer;
+      }
+      .promptSecondary.geist{
+        font-family: "GeistRegular", system-ui, sans-serif;
+        font-style: normal;
       }
       .promptSecondary:disabled{
         opacity: 0.5;
@@ -437,14 +442,14 @@
 
       .resetBtn{
         width: 100%;
-        padding: 14px 16px;
+        padding: 10px 12px;
         border-radius: 999px;
         border: 2px solid rgba(230,0,126,0.35);
         background: #000;
         color: var(--pink);
-        font-family: "RedactionItalic", system-ui, sans-serif;
-        font-style: italic;
-        font-size: 27px; /* ~70% larger */
+        font-family: "GeistRegular", system-ui, sans-serif;
+        font-style: normal;
+        font-size: 20px;
         cursor: pointer;
       }
 
@@ -493,6 +498,13 @@
         min-width: 56px;
         min-height: 56px;
         touch-action: manipulation;
+      }
+
+      body.is-generating .promptPrimary{
+        display: none;
+      }
+      body.is-generating .promptActions{
+        display: none !important;
       }
 
       /* --- Startscreen SVG overlay (animierte Linien + Punkte) --- */
@@ -570,7 +582,7 @@
               </button>
               <div id="promptBox" class="promptBox" aria-live="polite"></div>
               <div id="promptActions" class="promptActions">
-                <button id="btnRedo" class="promptSecondary" type="button">Redo</button>
+                <button id="btnRedo" class="promptSecondary geist" type="button">Redo</button>
                 <button id="btnGen" class="promptSecondary" type="button">Generate Hyperreality</button>
               </div>
             </div>
@@ -834,6 +846,7 @@
       }
       function setGenerating(on){
         isGenerating = on;
+        document.body.classList.toggle("is-generating", on);
         if (on) {
           setMode("idle");
           setStatus("");
@@ -872,7 +885,7 @@
           parts.push(cleaned);
         }
         if (!parts.length) return "";
-        return `Prompt:\n${parts.join(", ")}`;
+        return parts.join(", ");
       }
 
       function setPrompt(text, picked){
