@@ -84,11 +84,14 @@
       }
 
       .promptPanel{
-        width: min(520px, 100%);
+        width: min(90vmin, 90vw);
         display: grid;
         gap: 12px;
         align-items: center;
         justify-items: center;
+        margin-bottom: 40px;
+        transform: scale(1.2);
+        transform-origin: center;
       }
 
       .promptPrimary{
@@ -97,8 +100,8 @@
         color: var(--pink);
         background: #000;
         border-radius: 999px;
-        padding: 12px 16px;
-        font-size: 16px;
+        padding: 14px 18px;
+        font-size: 27px; /* ~70% larger */
         font-family: "RedactionItalic", system-ui, sans-serif;
         font-style: italic;
         letter-spacing: 0.3px;
@@ -141,9 +144,10 @@
         color: var(--pink);
         background: #000;
         border-radius: 999px;
-        padding: 10px 14px;
-        font-size: 14px;
-        font-family: "GeistRegular", system-ui, sans-serif;
+        padding: 12px 16px;
+        font-size: 24px; /* ~70% larger */
+        font-family: "RedactionItalic", system-ui, sans-serif;
+        font-style: italic;
         cursor: pointer;
       }
       .promptSecondary:disabled{
@@ -433,13 +437,14 @@
 
       .resetBtn{
         width: 100%;
-        padding: 12px 14px;
+        padding: 14px 16px;
         border-radius: 999px;
         border: 2px solid rgba(230,0,126,0.35);
         background: #000;
         color: var(--pink);
-        font-family: "GeistRegular", system-ui, sans-serif;
-        font-size: 16px;
+        font-family: "RedactionItalic", system-ui, sans-serif;
+        font-style: italic;
+        font-size: 27px; /* ~70% larger */
         cursor: pointer;
       }
 
@@ -851,9 +856,29 @@
         updatePromptUi();
       }
 
+      function formatPromptDisplay(picked){
+        if (!picked || typeof picked !== "object") return "";
+        const order = ["people", "gossip", "places", "atmosphere", "style"];
+        const seen = new Set();
+        const parts = [];
+        for (const key of order) {
+          const raw = picked[key];
+          if (!raw || typeof raw !== "string") continue;
+          const cleaned = raw.trim();
+          if (!cleaned) continue;
+          const normalized = cleaned.toLowerCase();
+          if (seen.has(normalized)) continue;
+          seen.add(normalized);
+          parts.push(cleaned);
+        }
+        if (!parts.length) return "";
+        return `Prompt:\n${parts.join(", ")}`;
+      }
+
       function setPrompt(text, picked){
         promptData = text ? { prompt: text, picked } : null;
-        promptBox.textContent = text || "";
+        const display = formatPromptDisplay(picked);
+        promptBox.textContent = display || "";
         updatePromptUi();
       }
 
