@@ -83,61 +83,71 @@
         letter-spacing: 0.2px;
       }
 
-      .generate{
-        width: 100%;
-        padding: 0;
-        border-radius: 999px;
-        border: none;
-        background: transparent;
-        cursor: pointer;
-        transform: scale(1.15);
-        transform-origin: center;
-        margin-bottom: 0;
-      }
-      .generate:disabled{
-        cursor: default;
-        opacity: 1;
-      }
-      .generate img{
-        width: 100%;
-        height: auto;
-        display: block;
-      }
-
       .promptPanel{
         width: min(520px, 100%);
         display: grid;
-        gap: 10px;
+        gap: 12px;
         align-items: center;
         justify-items: center;
       }
 
-      .promptBox{
+      .promptPrimary{
         width: 100%;
-        min-height: 92px;
-        padding: 12px 14px;
-        box-sizing: border-box;
-        border: 1px solid var(--pink);
-        border-radius: 14px;
+        border: 1.5px solid var(--pink);
         color: var(--pink);
-        background: rgba(255,255,255,0.85);
-        font-size: 14px;
-        line-height: 1.35;
-        white-space: pre-wrap;
+        background: #000;
+        border-radius: 999px;
+        padding: 12px 16px;
+        font-size: 16px;
+        font-family: "RedactionItalic", system-ui, sans-serif;
+        font-style: italic;
+        letter-spacing: 0.3px;
+        cursor: pointer;
+      }
+      .promptPrimary:disabled{
+        opacity: 0.5;
+        cursor: default;
       }
 
-      .promptLike{
-        border: 1px solid var(--pink);
+      .promptBox{
+        width: 100%;
+        padding: 6px 0 2px;
+        box-sizing: border-box;
         color: var(--pink);
-        background: transparent;
+        font-family: "GeistRegular", system-ui, sans-serif;
+        font-size: 18px;
+        line-height: 1.25;
+        text-align: center;
+        white-space: pre-wrap;
+        display: none;
+      }
+      .promptBox.is-visible{
+        display: block;
+      }
+
+      .promptActions{
+        width: 100%;
+        display: none;
+        gap: 10px;
+        align-items: center;
+        justify-items: center;
+      }
+      .promptActions.is-visible{
+        display: grid;
+      }
+      .promptSecondary{
+        width: 100%;
+        border: 1.5px solid var(--pink);
+        color: var(--pink);
+        background: #000;
         border-radius: 999px;
-        padding: 8px 14px;
+        padding: 10px 14px;
         font-size: 14px;
         font-family: "GeistRegular", system-ui, sans-serif;
         cursor: pointer;
       }
-      .promptLike:disabled{
-        opacity: 0.4;
+      .promptSecondary:disabled{
+        opacity: 0.5;
         cursor: default;
       }
 
@@ -550,15 +560,15 @@
         <div class="wrap">
           <div>
             <div class="promptPanel">
-              <button id="btnPrompt" class="generate" type="button" aria-label="Generate Prompt">
-                <img src="./svg_control/Button_generatehyperreality_02.svg" alt="" />
+              <button id="btnPrompt" class="promptPrimary" type="button" aria-label="Generate Prompt">
+                Generate Prompt
               </button>
-              <div id="promptBox" class="promptBox" aria-live="polite">Generate a prompt to begin.</div>
-              <button id="btnLike" class="promptLike" type="button" disabled>Like Prompt</button>
+              <div id="promptBox" class="promptBox" aria-live="polite"></div>
+              <div id="promptActions" class="promptActions">
+                <button id="btnRedo" class="promptSecondary" type="button">Redo</button>
+                <button id="btnGen" class="promptSecondary" type="button">Generate Hyperreality</button>
+              </div>
             </div>
-            <button id="btnGen" class="generate" type="button" aria-label="Generate Hyperreality">
-              <img src="./svg_control/Button_generatehyperreality.svg" alt="" />
-            </button>
             <div id="genProgress" class="genProgress" aria-hidden="true">
               <div id="genTimer" class="genTimer">01:00</div>
               <div class="progressTrack">
@@ -621,9 +631,10 @@
 
     <script>
       const btnPrompt = document.getElementById("btnPrompt");
-      const btnLike = document.getElementById("btnLike");
-      const promptBox = document.getElementById("promptBox");
+      const btnRedo = document.getElementById("btnRedo");
       const btnGen = document.getElementById("btnGen");
+      const promptBox = document.getElementById("promptBox");
+      const promptActions = document.getElementById("promptActions");
       const statusEl = document.getElementById("status");
       const genProgress = document.getElementById("genProgress");
       const genTimer = document.getElementById("genTimer");
@@ -778,7 +789,6 @@
 
       let isGenerating = false;
       let promptData = null;
-      let promptLocked = false;
       let lastSend = 0;
       let activePointerId = null;
       let hasTouchedOnce = false;
@@ -843,20 +853,17 @@
 
       function setPrompt(text, picked){
         promptData = text ? { prompt: text, picked } : null;
-        promptBox.textContent = text || "Generate a prompt to begin.";
-        updatePromptUi();
-      }
-
-      function setPromptLocked(on){
-        promptLocked = on;
+        promptBox.textContent = text || "";
         updatePromptUi();
       }
 
       function updatePromptUi(){
         const hasPrompt = Boolean(promptData && promptData.prompt);
-        btnPrompt.disabled = isGenerating || promptLocked;
-        btnLike.disabled = isGenerating || promptLocked || !hasPrompt;
-        btnGen.disabled = isGenerating || !promptLocked;
+        btnPrompt.disabled = isGenerating;
+        btnRedo.disabled = isGenerating || !hasPrompt;
+        btnGen.disabled = isGenerating || !hasPrompt;
+        promptBox.classList.toggle("is-visible", hasPrompt);
+        promptActions.classList.toggle("is-visible", hasPrompt);
       }
 
       async function apiGenerate(){
@@ -903,13 +910,12 @@
         }
         if (msg.type === "run_done" || msg.type === "run_error") {
           setGenerating(false);
-          setPromptLocked(false);
         }
       };
 
       // --- Prompt flow ---
       btnPrompt.addEventListener("click", async () => {
-        if (isGenerating || promptLocked) return;
+        if (isGenerating) return;
         setStatus("");
         try {
           const j = await apiPrompt();
@@ -921,15 +927,23 @@
         }
       });
 
-      btnLike.addEventListener("click", () => {
+      btnRedo.addEventListener("click", async () => {
         if (isGenerating || !promptData) return;
-        setPromptLocked(true);
+        setStatus("");
+        try {
+          const j = await apiPrompt();
+          setPrompt(j.prompt || "", j.picked || null);
+        } catch (e) {
+          setStatus("Error");
+          console.error(e);
+          setTimeout(() => setStatus(""), 1200);
+        }
       });
 
       // --- Generate button ---
       btnGen.addEventListener("click", async () => {
         if (isGenerating) return;
-        if (!promptLocked) return;
+        if (!promptData) return;
         setStatus("");
         try {
           setGenerating(true); // optimistic
