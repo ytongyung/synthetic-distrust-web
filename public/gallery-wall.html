@@ -437,6 +437,7 @@
     const overlayMount = document.getElementById("overlayMount");
 
     let slideshowTimer = null;
+    let slideshowToken = 0;
     let slideshowIndex = 0;
     let slideshowList = [];
     const SWIPE_MS = 820;
@@ -812,6 +813,8 @@
     }
 
     async function startSlideshow(){
+      slideshowToken += 1;
+      const token = slideshowToken;
       await fetchImages();
       if (!slideshowList.length){
         setWaiting(true);
@@ -822,6 +825,7 @@
       setSpotlight(false);
 
       const tick = async () => {
+        if (token !== slideshowToken) return;
         if (!slideshowList.length) return;
         if (slideshowIndex >= slideshowList.length){
           for (let i = slideshowList.length - 1; i > 0; i--){
@@ -837,12 +841,16 @@
           slideshowIndex++;
           if (slideshowIndex >= slideshowList.length) slideshowIndex = 0;
 
-          // skip missing images (avoid rapid flicker on 404)
-          const ok = await fetch(`/out/${encodeURIComponent(file)}?t=${Date.now()}`, { method: "HEAD" })
-            .then(r => r.ok)
-            .catch(() => false);
+          // preload image to avoid rapid flicker on failures
+          const ok = await new Promise((resolve) => {
+            const imgPre = new Image();
+            const url = `/out/${encodeURIComponent(file)}?t=${Date.now()}`;
+            imgPre.onload = () => resolve(true);
+            imgPre.onerror = () => resolve(false);
+            imgPre.src = url;
+          });
 
-          if (!ok){
+          if (!ok) {
             const idx = slideshowList.indexOf(file);
             if (idx !== -1) slideshowList.splice(idx, 1);
             continue;
@@ -850,17 +858,17 @@
 
           setFeatured(file);
           renderMeta(await loadMeta(file));
+          clearTimeout(slideshowTimer);
+          slideshowTimer = setTimeout(tick, 5000);
           return;
         }
       };
 
       await tick();
-      clearInterval(slideshowTimer);
-      slideshowTimer = setInterval(tick, 5000);
     }
 
     async function showFeaturedForAWhile(file, ts){
-      clearInterval(slideshowTimer);
+      clearTimeout(slideshowTimer);
       slideshowTimer = null;
       if (spotlightTimer){
         clearTimeout(spotlightTimer);
@@ -888,8 +896,8 @@
         setWaiting(true);
         setSpotlight(false);
         setOverlay("waiting");
-        clearInterval(slideshowTimer);
-        slideshowTimer = null;
+      clearTimeout(slideshowTimer);
+      slideshowTimer = null;
         startPlaceholder();
         metaEl.textContent = "";
       }
