@@ -64,21 +64,23 @@
     body.is-spotlight .frame{ border-radius:0; }
 
     /* Das Bild (Slideshow) */
-    #img{
+    .slide-img{
       width:100%;
       height:100%;
       object-fit:contain;
-      display:none;
       background:transparent;
       border-radius:8px;
-      position:relative;
+      position:absolute;
+      inset:0;
       z-index:2;
       transform:translateY(-12%) scale(0.7);
       transform-origin:center;
+      opacity:0;
+      transition:opacity 200ms ease;
     }
-    body.is-spotlight #img{ background:transparent; }
-    body.is-spotlight #img{ border-radius:0; }
-    .frame.is-featured #img{ display:block; }
+    body.is-spotlight .slide-img{ background:transparent; }
+    body.is-spotlight .slide-img{ border-radius:0; }
+    .frame.is-featured .slide-img.is-active{ opacity:1; }
 
     /* Optionaler Placeholder (wenn keine Bilder da sind) */
     canvas#placeholder3d{
@@ -340,7 +342,8 @@
             <div id="generationProgress" class="progressFill"></div>
           </div>
         </div>
-        <img id="img" alt="" />
+        <img id="imgA" class="slide-img is-active" alt="" />
+        <img id="imgB" class="slide-img" alt="" />
       </div>
       <div id="meta" class="meta"></div>
     </div>
@@ -360,6 +363,9 @@
     import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
     const canvas3d = document.getElementById("placeholder3d");
+    const imgA = document.getElementById("imgA");
+    const imgB = document.getElementById("imgB");
+    let activeImg = imgA;
     const generationTimer = document.getElementById("generationTimer");
     const generationProgress = document.getElementById("generationProgress");
     const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, alpha: true, antialias: true });
@@ -440,6 +446,7 @@
     let slideshowToken = 0;
     let slideshowNextAt = 0;
     let slideshowTickRunning = false;
+    let currentFile = null;
     let slideshowIndex = 0;
     let slideshowList = [];
     const SWIPE_MS = 820;
@@ -700,17 +707,35 @@
       }
     }
 
-    function setFeatured(file){
+    function setFeatured(file, url){
       frame.classList.add("is-featured");
       frame.classList.remove("is-waiting");
-      img.src = `/out/${encodeURIComponent(file)}?t=${Date.now()}`;
+      const src = url || `/out/${encodeURIComponent(file)}?t=${Date.now()}`;
+      const nextImg = activeImg === imgA ? imgB : imgA;
+      nextImg.onload = async () => {
+        // prevent swapping to the same file (can cause a flash)
+        if (currentFile === file) return;
+        currentFile = file;
 
-      const panel = frame.closest(".panel");
-      if (panel){
-        panel.classList.remove("is-swiping");
-        void panel.offsetWidth;
-        panel.classList.add("is-swiping");
-      }
+        // fade in next, then fade out previous to avoid blank frame
+        nextImg.classList.add("is-active");
+        const prevImg = activeImg;
+        activeImg = nextImg;
+        setTimeout(() => {
+          prevImg.classList.remove("is-active");
+        }, 220);
+
+        // trigger swipe after swap
+        const panel = frame.closest(".panel");
+        if (panel){
+          panel.classList.remove("is-swiping");
+          void panel.offsetWidth;
+          panel.classList.add("is-swiping");
+        }
+      };
+      nextImg.src = src;
+
+      // if image is cached and loads instantly, onload will still fire.
     }
 
     async function loadMeta(file){
@@ -853,9 +878,9 @@
           if (slideshowIndex >= slideshowList.length) slideshowIndex = 0;
 
           // preload image to avoid rapid flicker on failures
+          const url = `/out/${encodeURIComponent(file)}?t=${Date.now()}`;
           const ok = await new Promise((resolve) => {
             const imgPre = new Image();
-            const url = `/out/${encodeURIComponent(file)}?t=${Date.now()}`;
             imgPre.onload = () => resolve(true);
             imgPre.onerror = () => resolve(false);
             imgPre.src = url;
@@ -867,7 +892,7 @@
             continue;
           }
 
-          setFeatured(file);
+          setFeatured(file, url);
           renderMeta(await loadMeta(file));
           slideshowNextAt = Date.now() + 5000;
           clearTimeout(slideshowTimer);
