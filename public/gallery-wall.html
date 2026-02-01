@@ -77,7 +77,7 @@
       transform:translateY(-12%) scale(0.7);
       transform-origin:center;
       opacity:0;
-      transition:opacity 120ms ease;
+      transition:opacity 200ms ease;
     }
     body.is-spotlight #img{ background:transparent; }
     body.is-spotlight #img{ border-radius:0; }
@@ -838,8 +838,19 @@
       slideshowIndex = 0;
     }
 
+    function preloadImage(file){
+      if (!file) return;
+      const url = `/out/${encodeURIComponent(file)}?t=${Date.now()}`;
+      const imgPre = new Image();
+      imgPre.src = url;
+    }
+
     async function startSlideshow(){
-      await fetchImages();
+      if (!slideshowList.length){
+        await fetchImages();
+      } else {
+        fetchImages(); // refresh in background
+      }
       if (!slideshowList.length){
         setWaiting(true);
         stopPlaceholder();
@@ -859,6 +870,7 @@
         const file = slideshowList[slideshowIndex];
         slideshowIndex++;
         setFeatured(file);
+        preloadImage(slideshowList[slideshowIndex] || slideshowList[0]);
         renderMeta(await loadMeta(file), file);
       };
 
@@ -883,9 +895,10 @@
       setSpotlight(true);
       setFeatured(file);
       renderMeta(await loadMeta(file));
+      fetchImages(); // prep slideshow list while spotlight is on
 
       // nach 9s wieder in die Slideshow zurück
-      spotlightFadeTimer = setTimeout(() => { img.style.opacity = "0"; }, 8780);
+      spotlightFadeTimer = setTimeout(() => { img.style.opacity = "0"; }, 8920);
       spotlightTimer = setTimeout(() => {
         setSpotlight(false);
         startSlideshow();
