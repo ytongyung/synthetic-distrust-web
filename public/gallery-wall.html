@@ -18,7 +18,7 @@
       src:url("./fonts/Redaction-Italic.otf") format("opentype");
     }
 
-    :root { --swipeDur: 820ms; --overlayStroke: #e5007d; --lineWidth: 2px; }
+    :root { --swipeDur: 1100ms; --overlayStroke: #e5007d; --lineWidth: 2px; }
 
     html, body { margin:0; height:100%; background:#fff; }
     html.is-spotlight{ background:#e6007e; }
@@ -308,11 +308,11 @@
     body:not(.is-waiting):not(.is-spotlight) #slideshowUnderlay{ opacity:1; }
 
     .panel.is-swiping{
-      animation: swipeDown var(--swipeDur) ease both;
+      animation: swipeDown var(--swipeDur) cubic-bezier(.22,.61,.36,1) both;
     }
     @keyframes swipeDown{
-      from { transform: translateY(-10%); }
-      to   { transform: translateY(0); }
+      from { transform: translateY(-8%) scale(0.995); }
+      to   { transform: translateY(0) scale(1); }
     }
   </style>
 </head>
