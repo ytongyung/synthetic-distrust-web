@@ -49,6 +49,7 @@
       display:grid;
       grid-template-rows: 1fr auto;
       gap:22px;
+      will-change: transform;
     }
 
     .frame{
@@ -310,8 +311,8 @@
       animation: swipeDown var(--swipeDur) ease both;
     }
     @keyframes swipeDown{
-      from { transform: translateY(-10%); opacity: 0; }
-      to   { transform: translateY(0);   opacity: 1; }
+      from { transform: translateY(-10%); }
+      to   { transform: translateY(0); }
     }
   </style>
 </head>
