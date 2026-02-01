@@ -712,8 +712,11 @@
     function setFeatured(file){
       frame.classList.add("is-featured");
       frame.classList.remove("is-waiting");
-      img.style.opacity = "0";
-      img.src = `/out/${encodeURIComponent(file)}?t=${Date.now()}`;
+      const url = `/out/${encodeURIComponent(file)}?t=${Date.now()}`;
+      const preload = new Image();
+      preload.onload = () => { img.src = url; };
+      preload.onerror = () => { img.src = url; };
+      preload.src = url;
 
       const panel = frame.closest(".panel");
       if (panel){

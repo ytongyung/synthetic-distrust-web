@@ -101,7 +101,7 @@
         background: #000;
         border-radius: 999px;
         padding: 14px 18px;
-        font-size: 27px; /* ~70% larger */
+        font-size: 20px;
         font-family: "RedactionItalic", system-ui, sans-serif;
         font-style: italic;
         letter-spacing: 0.3px;
@@ -118,7 +118,7 @@
         box-sizing: border-box;
         color: #fff;
         font-family: "GeistRegular", system-ui, sans-serif;
-        font-size: 18px;
+        font-size: 20px;
         line-height: 1.25;
         text-align: center;
         white-space: pre-wrap;
@@ -134,7 +134,7 @@
         gap: 12px;
         align-items: center;
         justify-items: center;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
       }
       .promptActions.is-visible{
         display: grid;
@@ -150,6 +150,11 @@
         font-family: "RedactionItalic", system-ui, sans-serif;
         font-style: italic;
         cursor: pointer;
+      }
+      .promptSecondary.small{
+        width: 70%;
+        font-size: 16px;
+        padding: 8px 12px;
       }
       .promptSecondary.geist{
         font-family: "GeistRegular", system-ui, sans-serif;
@@ -582,7 +587,7 @@
               </button>
               <div id="promptBox" class="promptBox" aria-live="polite"></div>
               <div id="promptActions" class="promptActions">
-                <button id="btnRedo" class="promptSecondary geist" type="button">Redo</button>
+                <button id="btnRedo" class="promptSecondary geist small" type="button">Redo</button>
                 <button id="btnGen" class="promptSecondary" type="button">Generate Hyperreality</button>
               </div>
             </div>
@@ -948,6 +953,7 @@
         }
         if (msg.type === "run_done" || msg.type === "run_error") {
           setGenerating(false);
+          setPrompt("", null);
         }
       };
 
