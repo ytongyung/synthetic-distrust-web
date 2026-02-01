@@ -326,7 +326,7 @@
     <img src="./svg_gallery-wall/gallerywall_underlay_black.svg" alt="" />
   </div>
   <div id="revealUnderlay" aria-hidden="true">
-    <img src="./svg_gallery-wall/gallerywall_underlay.svg" alt="" />
+    <img src="./svg_gallery-wall/gallerywall_underlay_black.svg" alt="" />
   </div>
   <div id="screenOverlay" aria-hidden="true">
     <div id="overlayMount"></div>
@@ -482,10 +482,11 @@
       }
     }
     let spotlightTimer = null;
+    let spotlightFadeTimer = null;
 
     function setOverlay(mode){
       const url = mode === "pink"
-        ? "./svg_gallery-wall/gallerywall_vorlage_pink.svg"
+        ? "./svg_gallery-wall/gallerywall_vorlage_01.svg"
         : mode === "waiting"
           ? "./svg_gallery-wall/gallerywall_vorlage_black.svg"
           : "./svg_gallery-wall/gallerywall_vorlage_01.svg";
@@ -870,6 +871,10 @@
         clearTimeout(spotlightTimer);
         spotlightTimer = null;
       }
+      if (spotlightFadeTimer){
+        clearTimeout(spotlightFadeTimer);
+        spotlightFadeTimer = null;
+      }
 
       setWaiting(false);
       setSpotlight(true);
@@ -877,7 +882,11 @@
       renderMeta(await loadMeta(file));
 
       // nach 9s wieder in die Slideshow zurück
-      spotlightTimer = setTimeout(() => startSlideshow(), 9000);
+      spotlightFadeTimer = setTimeout(() => { img.style.opacity = "0"; }, 8780);
+      spotlightTimer = setTimeout(() => {
+        setSpotlight(false);
+        startSlideshow();
+      }, 9000);
     }
 
     // SSE: wenn ein neues Bild generiert wurde, kurz spotlighten
