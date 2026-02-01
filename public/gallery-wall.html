@@ -438,6 +438,8 @@
 
     let slideshowTimer = null;
     let slideshowToken = 0;
+    let slideshowNextAt = 0;
+    let slideshowTickRunning = false;
     let slideshowIndex = 0;
     let slideshowList = [];
     const SWIPE_MS = 820;
@@ -826,7 +828,16 @@
 
       const tick = async () => {
         if (token !== slideshowToken) return;
+        if (slideshowTickRunning) return;
+        slideshowTickRunning = true;
         if (!slideshowList.length) return;
+        const now = Date.now();
+        if (slideshowNextAt && now < slideshowNextAt) {
+          clearTimeout(slideshowTimer);
+          slideshowTimer = setTimeout(tick, Math.max(0, slideshowNextAt - now));
+          slideshowTickRunning = false;
+          return;
+        }
         if (slideshowIndex >= slideshowList.length){
           for (let i = slideshowList.length - 1; i > 0; i--){
             const j = Math.floor(Math.random() * (i + 1));
@@ -858,10 +869,13 @@
 
           setFeatured(file);
           renderMeta(await loadMeta(file));
+          slideshowNextAt = Date.now() + 5000;
           clearTimeout(slideshowTimer);
           slideshowTimer = setTimeout(tick, 5000);
+          slideshowTickRunning = false;
           return;
         }
+        slideshowTickRunning = false;
       };
 
       await tick();
@@ -870,6 +884,8 @@
     async function showFeaturedForAWhile(file, ts){
       clearTimeout(slideshowTimer);
       slideshowTimer = null;
+      slideshowNextAt = 0;
+      slideshowTickRunning = false;
       if (spotlightTimer){
         clearTimeout(spotlightTimer);
         spotlightTimer = null;
@@ -898,6 +914,8 @@
         setOverlay("waiting");
       clearTimeout(slideshowTimer);
       slideshowTimer = null;
+      slideshowNextAt = 0;
+      slideshowTickRunning = false;
         startPlaceholder();
         metaEl.textContent = "";
       }
