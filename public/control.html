@@ -2,7 +2,9 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <title>Controller</title>
     <style>
       @font-face {
@@ -174,21 +176,19 @@
         pointer-events: none;
         z-index: 1;
       }
-      .btnStroke rect{
+      .btnStroke path{
         fill: none;
         stroke: var(--pink);
         stroke-width: 2px;
         stroke-linecap: round;
         stroke-linejoin: round;
-        stroke-dasharray: 0 9999;
+        stroke-dasharray: var(--pathLen);
+        stroke-dashoffset: var(--pathLen);
         animation: btnStrokeDraw 2.6s linear infinite;
       }
-      .promptSecondary.small .btnStroke rect{
-        stroke-width: 2px;
-      }
       @keyframes btnStrokeDraw{
-        0%{ stroke-dasharray: 0 9999; }
-        100%{ stroke-dasharray: 9999 0; }
+        0%{ stroke-dashoffset: var(--pathLen); }
+        100%{ stroke-dashoffset: 0; }
       }
       .promptSecondary.geist{
         font-family: "GeistRegular", system-ui, sans-serif;
@@ -619,7 +619,7 @@
               <button id="btnPrompt" class="promptPrimary" type="button" aria-label="Generate Prompt">
                 <span class="btnLabel">Generate Prompt</span>
                 <svg class="btnStroke" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
-                  <rect x="1" y="1" width="98" height="38" rx="999" ry="999"></rect>
+                  <path d="" />
                 </svg>
               </button>
               <div id="promptBox" class="promptBox" aria-live="polite"></div>
@@ -627,13 +627,13 @@
                 <button id="btnRedo" class="promptSecondary geist small" type="button">
                   <span class="btnLabel">Redo</span>
                   <svg class="btnStroke" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
-                    <rect x="1" y="1" width="98" height="38" rx="999" ry="999"></rect>
+                    <path d="" />
                   </svg>
                 </button>
                 <button id="btnGen" class="promptSecondary" type="button">
                   <span class="btnLabel">Generate Hyperreality</span>
                   <svg class="btnStroke" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
-                    <rect x="1" y="1" width="98" height="38" rx="999" ry="999"></rect>
+                    <path d="" />
                   </svg>
                 </button>
               </div>
@@ -830,15 +830,42 @@
         panColumn.style.setProperty("--panHeight", `${Math.round(h)}px`);
       }
 
+      function updateButtonStrokes(){
+        const buttons = document.querySelectorAll(".promptPrimary, .promptSecondary");
+        buttons.forEach((btn) => {
+          const svg = btn.querySelector(".btnStroke");
+          const path = svg ? svg.querySelector("path") : null;
+          if (!svg || !path) return;
+          const rect = btn.getBoundingClientRect();
+          const w = Math.max(1, Math.round(rect.width));
+          const h = Math.max(1, Math.round(rect.height));
+          const r = Math.max(1, Math.round(h / 2));
+          svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+          svg.style.width = `${w}px`;
+          svg.style.height = `${h}px`;
+          const d = `M ${r} 1 H ${w - r} A ${r} ${r} 0 0 1 ${w - 1} ${r} V ${h - r} ` +
+                    `A ${r} ${r} 0 0 1 ${w - r} ${h - 1} H ${r} ` +
+                    `A ${r} ${r} 0 0 1 1 ${h - r} V ${r} ` +
+                    `A ${r} ${r} 0 0 1 ${r} 1 Z`;
+          path.setAttribute("d", d);
+          const len = path.getTotalLength();
+          path.style.setProperty("--pathLen", len);
+        });
+      }
+
       requestAnimationFrame(syncPanHeight);
-      window.addEventListener("resize", syncPanHeight);
+      requestAnimationFrame(updateButtonStrokes);
+      window.addEventListener("resize", () => {
+        syncPanHeight();
+        updateButtonStrokes();
+      });
 
       console.log("inner:", window.innerWidth, window.innerHeight);
       console.log("screen:", window.screen.width, window.screen.height);
       console.log("dpr:", window.devicePixelRatio);
 
-      const BASE_W = 768;
-      const BASE_H = 1024;
+      const BASE_W = 820;
+      const BASE_H = 1180;
       const MODE = "contain"; // "contain" (kein crop) oder "cover" (crop)
       const SCALE_MULT = 1;
 
