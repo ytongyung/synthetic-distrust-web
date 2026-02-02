@@ -295,6 +295,42 @@
         transform-origin: center;
       }
 
+      @media (max-height: 1024px){
+        :root{
+          --pad: 44px;
+        }
+
+        .wrap{
+          grid-template-rows: 1.3fr 0.7fr;
+          row-gap: 72px;
+          padding: calc(env(safe-area-inset-top) + 36px) var(--pad) calc(env(safe-area-inset-bottom));
+        }
+
+        .promptPanel{
+          transform: scale(1.08);
+        }
+
+        .promptPrimary{
+          font-size: 34px;
+        }
+
+        .promptSecondary{
+          font-size: 34px;
+        }
+
+        .promptSecondary.small{
+          font-size: 28px;
+        }
+
+        .promptBox{
+          font-size: 26px;
+        }
+
+        .controlRow{
+          transform: scale(1.12);
+        }
+      }
+
       .mainColumn{
         display: grid;
         gap: 10px;
