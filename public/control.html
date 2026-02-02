@@ -22,7 +22,7 @@
 
       :root{
         --pink:#e6007e;
-        --pad: 18px;
+        --pad: 28px;
         --radius: 26px;
       }
 
@@ -69,10 +69,10 @@
         margin: 0 auto;
         display: grid;
         grid-template-rows: auto 1fr auto;
-        padding: calc(var(--pad) + env(safe-area-inset-top)) var(--pad) calc(var(--pad) + env(safe-area-inset-bottom));
+        padding: calc(var(--pad) + 18px + env(safe-area-inset-top)) var(--pad) calc(var(--pad) + env(safe-area-inset-bottom));
         box-sizing: border-box;
-        gap: 16px;
-        align-items: center;
+        gap: 28px;
+        align-items: start;
         justify-items: center;
         text-align: center;
       }
@@ -91,7 +91,7 @@
         gap: 12px;
         align-items: center;
         justify-items: center;
-        margin-bottom: 28px;
+        margin-bottom: 48px;
         transform: scale(1.2);
         transform-origin: center;
       }
@@ -102,8 +102,8 @@
         color: var(--pink);
         background: #000;
         border-radius: 999px;
-        padding: 10px 16px;
-        font-size: 26px;
+        padding: 12px 18px;
+        font-size: 30px;
         font-family: "RedactionItalic", system-ui, sans-serif;
         font-style: italic;
         letter-spacing: 0.3px;
@@ -126,7 +126,7 @@
         box-sizing: border-box;
         color: #fff;
         font-family: "GeistRegular", system-ui, sans-serif;
-        font-size: 20px;
+        font-size: 23px;
         line-height: 1.25;
         text-align: center;
         white-space: pre-wrap;
@@ -153,8 +153,8 @@
         color: var(--pink);
         background: #000;
         border-radius: 999px;
-        padding: 8px 14px;
-        font-size: 26px;
+        padding: 10px 16px;
+        font-size: 30px;
         font-family: "RedactionItalic", system-ui, sans-serif;
         font-style: italic;
         cursor: pointer;
@@ -167,8 +167,8 @@
       }
       .promptSecondary.small{
         width: auto;
-        font-size: 21px;
-        padding: 6px 12px;
+        font-size: 24px;
+        padding: 7px 14px;
       }
 
       .btnLabel{
@@ -270,7 +270,7 @@
         grid-template-columns: minmax(0, 1fr) 78px;
         gap: 12px;
         align-items: stretch;
-        transform: scale(1.2);
+        transform: scale(1.35);
         transform-origin: center;
       }
 
@@ -877,7 +877,7 @@
       const BASE_W = 820;
       const BASE_H = 1180;
       const MODE = "contain"; // "contain" (kein crop) oder "cover" (crop)
-      const SCALE_MULT = 0.6;
+      const SCALE_MULT = 0.69;
 
       function fit() {
         const sx = window.innerWidth / BASE_W;
