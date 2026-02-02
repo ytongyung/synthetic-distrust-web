@@ -22,7 +22,7 @@
 
       :root{
         --pink:#e6007e;
-        --pad: 28px;
+        --pad: 8px;
         --radius: 26px;
       }
 
@@ -69,9 +69,9 @@
         margin: 0 auto;
         display: grid;
         grid-template-rows: auto 1fr auto;
-        padding: calc(var(--pad) + 18px + env(safe-area-inset-top)) var(--pad) calc(var(--pad) + env(safe-area-inset-bottom));
+        padding: calc(var(--pad) + env(safe-area-inset-top)) var(--pad) calc(var(--pad) + env(safe-area-inset-bottom));
         box-sizing: border-box;
-        gap: 64px;
+        gap: 32px;
         align-items: start;
         justify-items: center;
         text-align: center;
@@ -91,7 +91,7 @@
         gap: 24px;
         align-items: center;
         justify-items: center;
-        margin-bottom: 72px;
+        margin-bottom: 16px;
         transform: scale(1.2);
         transform-origin: center;
         align-self: start;
@@ -104,7 +104,7 @@
         background: #000;
         border-radius: 999px;
         padding: 12px 18px;
-        font-size: 30px;
+        font-size: 34px;
         font-family: "RedactionItalic", system-ui, sans-serif;
         font-style: italic;
         letter-spacing: 0.3px;
@@ -127,7 +127,7 @@
         box-sizing: border-box;
         color: #fff;
         font-family: "GeistRegular", system-ui, sans-serif;
-        font-size: 23px;
+        font-size: 26px;
         line-height: 1.25;
         text-align: center;
         white-space: pre-wrap;
@@ -155,7 +155,7 @@
         background: #000;
         border-radius: 999px;
         padding: 10px 16px;
-        font-size: 30px;
+        font-size: 34px;
         font-family: "RedactionItalic", system-ui, sans-serif;
         font-style: italic;
         cursor: pointer;
@@ -168,8 +168,8 @@
       }
       .promptSecondary.small{
         width: auto;
-        font-size: 24px;
-        padding: 7px 14px;
+        font-size: 27px;
+        padding: 8px 14px;
       }
 
       .btnLabel{
@@ -262,7 +262,7 @@
         grid-template-rows: auto 1fr auto;
         gap: 12px;
         width: 100%;
-        margin-top: 48px;
+        margin-top: 8px;
       }
 
       .controlRow{
