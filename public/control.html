@@ -40,6 +40,19 @@
       #stage {
         position: relative;
       }
+      #versionBadge{
+        position: fixed;
+        right: 8px;
+        top: 8px;
+        z-index: 5000;
+        font-size: 12px;
+        color: #fff;
+        background: rgba(0,0,0,0.5);
+        padding: 4px 6px;
+        border: 1px solid #e6007e;
+        border-radius: 6px;
+        font-family: "GeistRegular", system-ui, -apple-system, Arial, sans-serif;
+      }
       #design {
         position: absolute;
         left: 50%;
@@ -84,13 +97,13 @@
         pointer-events: auto;
       }
       .topArea{
-        top: calc(var(--pad) + env(safe-area-inset-top));
-        height: 40%;
+        top: calc(env(safe-area-inset-top));
+        height: 25%;
         align-items: flex-start;
       }
       .bottomArea{
         bottom: calc(var(--pad) + env(safe-area-inset-bottom));
-        height: 60%;
+        height: 70%;
         align-items: flex-end;
       }
 
@@ -108,7 +121,7 @@
         gap: 32px;
         align-items: center;
         justify-items: center;
-        margin-bottom: 28px;
+        margin-bottom: 0;
         transform: scale(1.2);
         transform-origin: center;
         align-self: center;
@@ -289,7 +302,7 @@
         grid-template-columns: minmax(0, 1fr) 78px;
         gap: 12px;
         align-items: stretch;
-        transform: scale(1.35);
+        transform: scale(1.25);
         transform-origin: center;
       }
 
@@ -639,6 +652,7 @@
       <div id="startSvgMount"></div>
     </div>
     <div id="stage">
+      <div id="versionBadge">v2026-02-02-01</div>
       <div id="design">
         <div class="wrap">
           <div class="topArea">
