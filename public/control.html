@@ -124,8 +124,8 @@
         color: var(--pink);
         background: #000;
         border-radius: 999px;
-        padding: 12px 18px;
-        font-size: 39px;
+        padding: 14px 22px;
+        font-size: 47px;
         font-family: "RedactionItalic", system-ui, sans-serif;
         font-style: italic;
         letter-spacing: 0.3px;
@@ -155,8 +155,7 @@
         display: block;
         visibility: hidden;
         opacity: 0;
-        min-height: 3.8em;
-        max-height: 5.8em;
+        height: 5.8em;
         overflow-y: auto;
         transition: opacity 180ms ease;
       }
@@ -174,7 +173,7 @@
         grid-template-columns: 1fr;
         visibility: hidden;
         opacity: 0;
-        min-height: 136px;
+        height: 176px;
         transition: opacity 180ms ease;
       }
       .promptActions.is-visible{
@@ -187,8 +186,8 @@
         color: var(--pink);
         background: #000;
         border-radius: 999px;
-        padding: 10px 16px;
-        font-size: 39px;
+        padding: 12px 19px;
+        font-size: 47px;
         font-family: "RedactionItalic", system-ui, sans-serif;
         font-style: italic;
         cursor: pointer;
@@ -201,8 +200,8 @@
       }
       .promptSecondary.small{
         width: auto;
-        font-size: 31px;
-        padding: 9px 16px;
+        font-size: 37px;
+        padding: 11px 19px;
       }
 
       .btnLabel{
@@ -317,8 +316,8 @@
 
         .wrap{
           grid-template-rows: 1.45fr 0.55fr;
-          row-gap: 140px;
-          padding: calc(env(safe-area-inset-top) + 96px) var(--pad) calc(env(safe-area-inset-bottom) + 12px);
+          row-gap: 120px;
+          padding: calc(env(safe-area-inset-top) + 96px) var(--pad) calc(env(safe-area-inset-bottom) + 32px);
         }
 
         .promptPanel{
@@ -327,11 +326,11 @@
 
         .promptPrimary,
         .promptSecondary{
-          font-size: 34px;
+          font-size: 41px;
         }
 
         .promptSecondary.small{
-          font-size: 28px;
+          font-size: 34px;
         }
 
         .promptBox{
@@ -339,11 +338,11 @@
         }
 
         .bottomArea .pad{
-          margin-top: 44px;
+          margin-top: 24px;
         }
 
         .controlRow{
-          margin-top: 36px;
+          margin-top: 20px;
         }
       }
 
@@ -1103,7 +1102,9 @@
         btnGen.disabled = isGenerating || !hasPrompt;
         promptBox.classList.toggle("is-visible", hasPrompt);
         promptActions.classList.toggle("is-visible", hasPrompt);
-        btnPrompt.style.display = hasPrompt ? "none" : "";
+        btnPrompt.style.visibility = hasPrompt ? "hidden" : "visible";
+        btnPrompt.style.opacity = hasPrompt ? "0" : "1";
+        btnPrompt.style.pointerEvents = hasPrompt ? "none" : "";
         updateButtonStrokes();
       }
 
