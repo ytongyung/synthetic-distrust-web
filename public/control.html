@@ -67,14 +67,27 @@
         height: 100%;
         width: 100%;
         margin: 0 auto;
-        display: grid;
-        grid-template-rows: auto 1fr auto;
+        display: flex;
+        flex-direction: column;
         padding: calc(var(--pad) + env(safe-area-inset-top)) var(--pad) calc(var(--pad) + env(safe-area-inset-bottom));
         box-sizing: border-box;
-        gap: 32px;
-        align-items: start;
-        justify-items: center;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
         text-align: center;
+      }
+
+      .topArea,
+      .bottomArea{
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+      .topArea{
+        align-items: flex-start;
+      }
+      .bottomArea{
+        align-items: flex-end;
       }
 
       .title{
@@ -94,7 +107,7 @@
         margin-bottom: 16px;
         transform: scale(1.2);
         transform-origin: center;
-        align-self: start;
+        align-self: center;
       }
 
       .promptPrimary{
@@ -257,12 +270,12 @@
       }
 
       .pad{
-        align-self: end;
+        align-self: center;
         display: grid;
         grid-template-rows: auto 1fr auto;
         gap: 12px;
         width: 100%;
-        margin-top: 8px;
+        margin-top: 0;
       }
 
       .controlRow{
@@ -624,87 +637,90 @@
     <div id="stage">
       <div id="design">
         <div class="wrap">
-          <div>
-            <div class="promptPanel">
-              <button id="btnPrompt" class="promptPrimary" type="button" aria-label="Generate Prompt">
-                <span class="btnLabel">Generate Prompt</span>
-                <svg class="btnStroke" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
-                  <path d="" />
-                </svg>
-              </button>
-              <div id="promptBox" class="promptBox" aria-live="polite"></div>
-              <div id="promptActions" class="promptActions">
-                <button id="btnRedo" class="promptSecondary geist small" type="button">
-                  <span class="btnLabel">Redo</span>
+          <div class="topArea">
+            <div>
+              <div class="promptPanel">
+                <button id="btnPrompt" class="promptPrimary" type="button" aria-label="Generate Prompt">
+                  <span class="btnLabel">Generate Prompt</span>
                   <svg class="btnStroke" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
                     <path d="" />
                   </svg>
                 </button>
-                <button id="btnGen" class="promptSecondary" type="button">
-                  <span class="btnLabel">Generate Hyperreality</span>
-                  <svg class="btnStroke" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
-                    <path d="" />
-                  </svg>
-                </button>
+                <div id="promptBox" class="promptBox" aria-live="polite"></div>
+                <div id="promptActions" class="promptActions">
+                  <button id="btnRedo" class="promptSecondary geist small" type="button">
+                    <span class="btnLabel">Redo</span>
+                    <svg class="btnStroke" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+                      <path d="" />
+                    </svg>
+                  </button>
+                  <button id="btnGen" class="promptSecondary" type="button">
+                    <span class="btnLabel">Generate Hyperreality</span>
+                    <svg class="btnStroke" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+                      <path d="" />
+                    </svg>
+                  </button>
+                </div>
               </div>
-            </div>
-            <div id="genProgress" class="genProgress" aria-hidden="true">
-              <div id="genTimer" class="genTimer">01:00</div>
-              <div class="progressTrack">
-                <div id="progressFill" class="progressFill"></div>
+              <div id="genProgress" class="genProgress" aria-hidden="true">
+                <div id="genTimer" class="genTimer">01:00</div>
+                <div class="progressTrack">
+                  <div id="progressFill" class="progressFill"></div>
+                </div>
               </div>
+              <div id="status" class="status"></div>
             </div>
-        <div id="status" class="status"></div>
-      </div>
+          </div>
 
-      <div class="pad">
-        <div id="controlRow" class="controlRow">
-          <div class="mainColumn">
-            <div id="stickArea" class="stickArea">
-              <div class="centerDot"></div>
-              <div class="axisHint" aria-hidden="true">
-                <span class="axisH"></span>
-                <span class="axisV"></span>
-                <span class="arrow aL"></span>
-                <span class="arrow aR"></span>
-                <span class="arrow aU"></span>
-                <span class="arrow aD"></span>
-              </div>
-              <div id="knob" class="knob"></div>
-            </div>
-            <div class="zoomControl">
-              <div class="zoomColumn">
-                <div class="zoomOuter">
-                  <div class="zoomRow">
-                    <div class="zoomIcon" aria-hidden="true">–</div>
-                    <input id="zoomSlider" class="zoomSlider" type="range" min="0" max="100" value="50" />
-                    <div class="zoomIcon" aria-hidden="true">+</div>
+          <div class="bottomArea">
+            <div class="pad">
+              <div id="controlRow" class="controlRow">
+                <div class="mainColumn">
+                  <div id="stickArea" class="stickArea">
+                    <div class="centerDot"></div>
+                    <div class="axisHint" aria-hidden="true">
+                      <span class="axisH"></span>
+                      <span class="axisV"></span>
+                      <span class="arrow aL"></span>
+                      <span class="arrow aR"></span>
+                      <span class="arrow aU"></span>
+                      <span class="arrow aD"></span>
+                    </div>
+                    <div id="knob" class="knob"></div>
+                  </div>
+                  <div class="zoomControl">
+                    <div class="zoomColumn">
+                      <div class="zoomOuter">
+                        <div class="zoomRow">
+                          <div class="zoomIcon" aria-hidden="true">–</div>
+                          <input id="zoomSlider" class="zoomSlider" type="range" min="0" max="100" value="50" />
+                          <div class="zoomIcon" aria-hidden="true">+</div>
+                        </div>
+                      </div>
+                      <button id="btnReset" class="resetBtn" type="button">Reset View</button>
+                    </div>
                   </div>
                 </div>
-                <button id="btnReset" class="resetBtn" type="button">Reset View</button>
+                <div id="panColumn" class="panColumn">
+                  <div class="panIcon" aria-hidden="true">↑</div>
+                  <div id="panSliderWrap" class="panSliderWrap">
+                    <input
+                      id="panSlider"
+                      class="panSlider"
+                      type="range"
+                      min="-100"
+                      max="100"
+                      value="0"
+                      step="1"
+                      aria-label="Pan up and down"
+                    />
+                  </div>
+                  <div class="panIcon" aria-hidden="true">↓</div>
+                </div>
               </div>
             </div>
           </div>
-          <div id="panColumn" class="panColumn">
-            <div class="panIcon" aria-hidden="true">↑</div>
-            <div id="panSliderWrap" class="panSliderWrap">
-              <input
-                id="panSlider"
-                class="panSlider"
-                type="range"
-                min="-100"
-                max="100"
-                value="0"
-                step="1"
-                aria-label="Pan up and down"
-              />
-            </div>
-            <div class="panIcon" aria-hidden="true">↓</div>
-          </div>
         </div>
-
-      </div>
-    </div>
       </div>
     </div>
 
