@@ -22,7 +22,7 @@
 
       :root{
         --pink:#e6007e;
-        --pad: 18px;
+        --pad: 28px;
         --radius: 26px;
       }
 
@@ -42,9 +42,9 @@
       }
       #design {
         position: absolute;
-        left: 0;
+        left: 50%;
         top: 0;
-        transform-origin: top left;
+        transform-origin: top center;
       }
       #startScreen{
         position: fixed;
@@ -92,6 +92,10 @@
         bottom: calc(var(--pad) + env(safe-area-inset-bottom));
         height: auto;
         align-items: flex-end;
+      }
+
+      .bottomArea .pad{
+        margin-top: 24px;
       }
 
       .title{
@@ -909,7 +913,7 @@
         const design = document.getElementById("design");
         design.style.width = `${BASE_W}px`;
         design.style.height = `${BASE_H}px`;
-        design.style.transform = `scale(${s})`;
+        design.style.transform = `translateX(-50%) scale(${s})`;
       }
 
       window.addEventListener("resize", fit);
