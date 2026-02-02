@@ -91,7 +91,7 @@
         gap: 12px;
         align-items: center;
         justify-items: center;
-        margin-bottom: 40px;
+        margin-bottom: 28px;
         transform: scale(1.2);
         transform-origin: center;
       }
@@ -110,6 +110,10 @@
         cursor: pointer;
         position: relative;
         overflow: hidden;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
       }
       .promptPrimary:disabled{
         opacity: 0.5;
@@ -156,6 +160,10 @@
         cursor: pointer;
         position: relative;
         overflow: hidden;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
       }
       .promptSecondary.small{
         width: auto;
@@ -170,9 +178,9 @@
       }
       .btnStroke{
         position: absolute;
-        inset: -2px;
-        width: calc(100% + 4px);
-        height: calc(100% + 4px);
+        inset: 0;
+        width: 100%;
+        height: 100%;
         pointer-events: none;
         z-index: 1;
       }
@@ -182,12 +190,12 @@
         stroke-width: 2px;
         stroke-linecap: round;
         stroke-linejoin: round;
-        stroke-dasharray: var(--pathLen);
-        stroke-dashoffset: var(--pathLen);
+        stroke-dasharray: var(--pathLen, 1);
+        stroke-dashoffset: var(--pathLen, 1);
         animation: btnStrokeDraw 2.6s linear infinite;
       }
       @keyframes btnStrokeDraw{
-        0%{ stroke-dashoffset: var(--pathLen); }
+        0%{ stroke-dashoffset: var(--pathLen, 1); }
         100%{ stroke-dashoffset: 0; }
       }
       .promptSecondary.geist{
@@ -836,17 +844,16 @@
           const svg = btn.querySelector(".btnStroke");
           const path = svg ? svg.querySelector("path") : null;
           if (!svg || !path) return;
-          const rect = btn.getBoundingClientRect();
-          const w = Math.max(1, Math.round(rect.width));
-          const h = Math.max(1, Math.round(rect.height));
-          const r = Math.max(1, Math.round(h / 2));
+          const w = Math.max(1, Math.round(btn.offsetWidth));
+          const h = Math.max(1, Math.round(btn.offsetHeight));
+          const inset = 1;
+          const r = Math.max(1, Math.round((h - inset * 2) / 2));
           svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
-          svg.style.width = `${w}px`;
-          svg.style.height = `${h}px`;
-          const d = `M ${r} 1 H ${w - r} A ${r} ${r} 0 0 1 ${w - 1} ${r} V ${h - r} ` +
-                    `A ${r} ${r} 0 0 1 ${w - r} ${h - 1} H ${r} ` +
-                    `A ${r} ${r} 0 0 1 1 ${h - r} V ${r} ` +
-                    `A ${r} ${r} 0 0 1 ${r} 1 Z`;
+          const d = `M ${r + inset} ${inset} H ${w - r - inset} ` +
+                    `A ${r} ${r} 0 0 1 ${w - inset} ${r + inset} V ${h - r - inset} ` +
+                    `A ${r} ${r} 0 0 1 ${w - r - inset} ${h - inset} H ${r + inset} ` +
+                    `A ${r} ${r} 0 0 1 ${inset} ${h - r - inset} V ${r + inset} ` +
+                    `A ${r} ${r} 0 0 1 ${r + inset} ${inset}`;
           path.setAttribute("d", d);
           const len = path.getTotalLength();
           path.style.setProperty("--pathLen", len);
@@ -855,6 +862,9 @@
 
       requestAnimationFrame(syncPanHeight);
       requestAnimationFrame(updateButtonStrokes);
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => requestAnimationFrame(updateButtonStrokes));
+      }
       window.addEventListener("resize", () => {
         syncPanHeight();
         updateButtonStrokes();
@@ -867,7 +877,7 @@
       const BASE_W = 820;
       const BASE_H = 1180;
       const MODE = "contain"; // "contain" (kein crop) oder "cover" (crop)
-      const SCALE_MULT = 1;
+      const SCALE_MULT = 0.6;
 
       function fit() {
         const sx = window.innerWidth / BASE_W;
@@ -982,6 +992,7 @@
         promptBox.classList.toggle("is-visible", hasPrompt);
         promptActions.classList.toggle("is-visible", hasPrompt);
         btnPrompt.style.display = hasPrompt ? "none" : "";
+        updateButtonStrokes();
       }
 
       async function apiGenerate(){
