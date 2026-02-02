@@ -72,8 +72,8 @@
         margin: 0 auto;
         display: grid;
         grid-template-rows: 1.2fr 0.8fr;
-        row-gap: 64px;
-        padding: calc(env(safe-area-inset-top) + 24px) var(--pad) calc(env(safe-area-inset-bottom));
+        row-gap: 96px;
+        padding: calc(env(safe-area-inset-top) + 48px) var(--pad) calc(env(safe-area-inset-bottom));
         box-sizing: border-box;
         text-align: center;
       }
@@ -93,7 +93,7 @@
       }
 
       .bottomArea .pad{
-        margin-top: 0;
+        margin-top: 24px;
       }
 
       .title{
@@ -286,13 +286,48 @@
 
       .controlRow{
         width: min(90vmin, 90vw);
-        margin: 0 auto;
+        margin: 16px auto 0;
         display: grid;
         grid-template-columns: minmax(0, 1fr) 78px;
         gap: 12px;
         align-items: stretch;
-        transform: scale(1.25);
+        transform: scale(1.12);
         transform-origin: center;
+      }
+
+      @media (orientation: portrait){
+        .wrap{
+          grid-template-rows: 1.35fr 0.65fr;
+          row-gap: 120px;
+          padding: calc(env(safe-area-inset-top) + 72px) var(--pad) calc(env(safe-area-inset-bottom) + 12px);
+        }
+
+        .promptPanel{
+          gap: 26px;
+          transform: scale(1.02);
+        }
+
+        .promptPrimary,
+        .promptSecondary{
+          font-size: 34px;
+        }
+
+        .promptSecondary.small{
+          font-size: 28px;
+        }
+
+        .promptBox{
+          font-size: 26px;
+        }
+
+        .bottomArea .pad{
+          margin-top: 36px;
+        }
+
+        .controlRow{
+          margin-top: 28px;
+          transform: scale(1.0);
+        }
       }
 
       @media (max-height: 1024px){
