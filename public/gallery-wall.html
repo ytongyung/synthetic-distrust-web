@@ -714,8 +714,14 @@
       frame.classList.remove("is-waiting");
       const url = `/out/${encodeURIComponent(file)}?t=${Date.now()}`;
       const preload = new Image();
-      preload.onload = () => { img.src = url; };
-      preload.onerror = () => { img.src = url; };
+      preload.onload = () => {
+        img.style.opacity = "0.6";
+        img.src = url;
+      };
+      preload.onerror = () => {
+        img.style.opacity = "0.6";
+        img.src = url;
+      };
       preload.src = url;
 
       const panel = frame.closest(".panel");
