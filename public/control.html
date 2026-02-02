@@ -67,26 +67,28 @@
         height: 100%;
         width: 100%;
         margin: 0 auto;
-        display: flex;
-        flex-direction: column;
+        position: relative;
         padding: calc(var(--pad) + env(safe-area-inset-top)) var(--pad) calc(var(--pad) + env(safe-area-inset-bottom));
         box-sizing: border-box;
-        gap: 12px;
-        align-items: center;
-        justify-content: space-between;
         text-align: center;
       }
 
       .topArea,
       .bottomArea{
         width: 100%;
+        position: absolute;
+        left: var(--pad);
+        right: var(--pad);
         display: flex;
         justify-content: center;
+        pointer-events: auto;
       }
       .topArea{
+        top: calc(var(--pad) + env(safe-area-inset-top));
         align-items: flex-start;
       }
       .bottomArea{
+        bottom: calc(var(--pad) + env(safe-area-inset-bottom));
         align-items: flex-end;
       }
 
@@ -104,7 +106,7 @@
         gap: 24px;
         align-items: center;
         justify-items: center;
-        margin-bottom: 16px;
+        margin-bottom: 12px;
         transform: scale(1.2);
         transform-origin: center;
         align-self: center;
