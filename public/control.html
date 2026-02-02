@@ -55,9 +55,9 @@
       }
       #design {
         position: absolute;
-        left: 50%;
-        top: 50%;
-        transform-origin: center;
+        left: 0;
+        top: 0;
+        transform-origin: top left;
       }
       #startScreen{
         position: fixed;
@@ -923,7 +923,7 @@
         const design = document.getElementById("design");
         design.style.width = `${BASE_W}px`;
         design.style.height = `${BASE_H}px`;
-        design.style.transform = `translate(-50%, -50%) scale(${s})`;
+        design.style.transform = `scale(${s})`;
       }
 
       window.addEventListener("resize", fit);
