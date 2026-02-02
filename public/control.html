@@ -161,25 +161,34 @@
         padding: 6px 12px;
       }
 
-      .promptPrimary::after,
-      .promptSecondary::after{
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: inherit;
-        pointer-events: none;
-        border: 2px solid var(--pink);
-        border-image: linear-gradient(90deg, var(--pink) 50%, transparent 0) 1;
-        border-image-slice: 1;
-        animation: buttonDraw 2.6s linear infinite;
+      .btnLabel{
+        position: relative;
+        z-index: 2;
+        display: inline-block;
       }
-
-      @keyframes buttonDraw{
-        0%{ border-image-source: linear-gradient(0deg, transparent 0 100%); }
-        25%{ border-image-source: linear-gradient(90deg, var(--pink) 0 25%, transparent 25% 100%); }
-        50%{ border-image-source: linear-gradient(180deg, var(--pink) 0 50%, transparent 50% 100%); }
-        75%{ border-image-source: linear-gradient(270deg, var(--pink) 0 75%, transparent 75% 100%); }
-        100%{ border-image-source: linear-gradient(360deg, var(--pink) 0 100%); }
+      .btnStroke{
+        position: absolute;
+        inset: -2px;
+        width: calc(100% + 4px);
+        height: calc(100% + 4px);
+        pointer-events: none;
+        z-index: 1;
+      }
+      .btnStroke rect{
+        fill: none;
+        stroke: var(--pink);
+        stroke-width: 2px;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 0 9999;
+        animation: btnStrokeDraw 2.6s linear infinite;
+      }
+      .promptSecondary.small .btnStroke rect{
+        stroke-width: 2px;
+      }
+      @keyframes btnStrokeDraw{
+        0%{ stroke-dasharray: 0 9999; }
+        100%{ stroke-dasharray: 9999 0; }
       }
       .promptSecondary.geist{
         font-family: "GeistRegular", system-ui, sans-serif;
@@ -608,12 +617,25 @@
           <div>
             <div class="promptPanel">
               <button id="btnPrompt" class="promptPrimary" type="button" aria-label="Generate Prompt">
-                Generate Prompt
+                <span class="btnLabel">Generate Prompt</span>
+                <svg class="btnStroke" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+                  <rect x="1" y="1" width="98" height="38" rx="999" ry="999"></rect>
+                </svg>
               </button>
               <div id="promptBox" class="promptBox" aria-live="polite"></div>
               <div id="promptActions" class="promptActions">
-                <button id="btnRedo" class="promptSecondary geist small" type="button">Redo</button>
-                <button id="btnGen" class="promptSecondary" type="button">Generate Hyperreality</button>
+                <button id="btnRedo" class="promptSecondary geist small" type="button">
+                  <span class="btnLabel">Redo</span>
+                  <svg class="btnStroke" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+                    <rect x="1" y="1" width="98" height="38" rx="999" ry="999"></rect>
+                  </svg>
+                </button>
+                <button id="btnGen" class="promptSecondary" type="button">
+                  <span class="btnLabel">Generate Hyperreality</span>
+                  <svg class="btnStroke" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+                    <rect x="1" y="1" width="98" height="38" rx="999" ry="999"></rect>
+                  </svg>
+                </button>
               </div>
             </div>
             <div id="genProgress" class="genProgress" aria-hidden="true">

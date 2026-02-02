@@ -471,6 +471,7 @@
       let orbitVelDY = 0;
       let panInput = 0;
       let panVel = 0;
+      let lastOrbitTs = 0;
       let revealLock = 0;
       let inputLockUntil = 0;
       const ORBIT_SPEED = 0.06;
@@ -544,6 +545,7 @@
         if (msg?.type === "control_orbit") {
           orbitInputDX = (Number(msg.dx) || 0) * ORBIT_SPEED;
           orbitInputDY = (Number(msg.dy) || 0) * ORBIT_SPEED;
+          lastOrbitTs = performance.now();
         }
 
         if (msg?.type === "control_zoom") {
@@ -1024,13 +1026,18 @@
         const frameScale = delta * 60;
 
         // Während Kamera-Animation/Lock: KEIN Orbit/Pan drift!
-        const locked = camAnim || performance.now() < inputLockUntil;
+        const nowMs = performance.now();
+        const locked = camAnim || nowMs < inputLockUntil;
         if (locked) {
           orbitInputDX = orbitInputDY = 0;
           panInput = 0;
           orbitVelDX = orbitVelDY = 0;
           panVel = 0;
         } else {
+          if (nowMs - lastOrbitTs > 120) {
+            orbitInputDX = 0;
+            orbitInputDY = 0;
+          }
           orbitVelDX += (orbitInputDX - orbitVelDX) * ORBIT_SMOOTH;
           orbitVelDY += (orbitInputDY - orbitVelDY) * ORBIT_SMOOTH;
           panVel += (panInput - panVel) * PAN_SMOOTH;
