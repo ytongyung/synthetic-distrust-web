@@ -28,7 +28,7 @@
         --pad: 56px;
         --radius: 26px;
         --prompt-scale: 1.2;
-        --control-scale: 1.12;
+        --control-scale: 1.34;
       }
 
       html, body, #stage {
@@ -92,6 +92,8 @@
       }
       .bottomArea{
         align-items: flex-end;
+        padding-bottom: 36px;
+        box-sizing: border-box;
       }
 
       .bottomArea .pad{
@@ -124,8 +126,8 @@
         color: var(--pink);
         background: #000;
         border-radius: 999px;
-        padding: 14px 22px;
-        font-size: 47px;
+        padding: 17px 26px;
+        font-size: 56px;
         font-family: "RedactionItalic", system-ui, sans-serif;
         font-style: italic;
         letter-spacing: 0.3px;
@@ -148,14 +150,14 @@
         box-sizing: border-box;
         color: #fff;
         font-family: "GeistRegular", system-ui, sans-serif;
-        font-size: 30px;
+        font-size: 36px;
         line-height: 1.25;
         text-align: center;
         white-space: pre-wrap;
         display: block;
         visibility: hidden;
         opacity: 0;
-        height: 5.8em;
+        height: 7em;
         overflow-y: auto;
         transition: opacity 180ms ease;
       }
@@ -173,7 +175,7 @@
         grid-template-columns: 1fr;
         visibility: hidden;
         opacity: 0;
-        height: 176px;
+        height: 212px;
         transition: opacity 180ms ease;
       }
       .promptActions.is-visible{
@@ -186,8 +188,8 @@
         color: var(--pink);
         background: #000;
         border-radius: 999px;
-        padding: 12px 19px;
-        font-size: 47px;
+        padding: 14px 23px;
+        font-size: 56px;
         font-family: "RedactionItalic", system-ui, sans-serif;
         font-style: italic;
         cursor: pointer;
@@ -200,8 +202,8 @@
       }
       .promptSecondary.small{
         width: auto;
-        font-size: 37px;
-        padding: 11px 19px;
+        font-size: 44px;
+        padding: 13px 23px;
       }
 
       .btnLabel{
@@ -311,7 +313,7 @@
       @media (orientation: portrait){
         :root{
           --prompt-scale: 0.96;
-          --control-scale: 0.9;
+          --control-scale: 1.08;
         }
 
         .wrap{
@@ -326,15 +328,15 @@
 
         .promptPrimary,
         .promptSecondary{
-          font-size: 41px;
+          font-size: 49px;
         }
 
         .promptSecondary.small{
-          font-size: 34px;
+          font-size: 41px;
         }
 
         .promptBox{
-          font-size: 26px;
+          font-size: 31px;
         }
 
         .bottomArea .pad{
@@ -343,6 +345,10 @@
 
         .controlRow{
           margin-top: 20px;
+        }
+
+        .bottomArea{
+          padding-bottom: 56px;
         }
       }
 
@@ -361,19 +367,19 @@
         }
 
         .promptPrimary{
-          font-size: 34px;
+          font-size: 41px;
         }
 
         .promptSecondary{
-          font-size: 34px;
+          font-size: 41px;
         }
 
         .promptSecondary.small{
-          font-size: 28px;
+          font-size: 34px;
         }
 
         .promptBox{
-          font-size: 26px;
+          font-size: 31px;
         }
 
         .controlRow{
