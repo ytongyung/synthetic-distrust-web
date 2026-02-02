@@ -56,7 +56,7 @@ const flushQueue = () => {
   writing = true
   const next = writeQueue.shift() || ""
   let i = 0
-  const charsPerFrame = 0.6
+  const charsPerFrame = 1.5
   let carry = 0
   const tick = () => {
     if (i < next.length) {
