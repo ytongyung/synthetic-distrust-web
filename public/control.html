@@ -22,7 +22,7 @@
 
       :root{
         --pink:#e6007e;
-        --pad: 8px;
+        --pad: 4px;
         --radius: 26px;
       }
 
@@ -81,7 +81,7 @@
         width: 100%;
         margin: 0 auto;
         position: relative;
-        padding: calc(var(--pad) + env(safe-area-inset-top)) var(--pad) calc(var(--pad) + env(safe-area-inset-bottom));
+        padding: calc(env(safe-area-inset-top)) var(--pad) calc(env(safe-area-inset-bottom));
         box-sizing: border-box;
         text-align: center;
       }
@@ -97,8 +97,8 @@
         pointer-events: auto;
       }
       .topArea{
-        top: calc(env(safe-area-inset-top));
-        height: 25%;
+        top: 0;
+        height: 20%;
         align-items: flex-start;
       }
       .bottomArea{
