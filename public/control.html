@@ -168,30 +168,18 @@
         inset: 0;
         border-radius: inherit;
         pointer-events: none;
-        background:
-          linear-gradient(var(--pink), var(--pink)) left top / 0% 2px no-repeat,
-          linear-gradient(var(--pink), var(--pink)) right top / 2px 0% no-repeat,
-          linear-gradient(var(--pink), var(--pink)) right bottom / 0% 2px no-repeat,
-          linear-gradient(var(--pink), var(--pink)) left bottom / 2px 0% no-repeat;
+        border: 2px solid var(--pink);
+        border-image: linear-gradient(90deg, var(--pink) 50%, transparent 0) 1;
+        border-image-slice: 1;
         animation: buttonDraw 2.6s linear infinite;
       }
 
       @keyframes buttonDraw{
-        0%{
-          background-size: 0% 2px, 2px 0%, 0% 2px, 2px 0%;
-        }
-        25%{
-          background-size: 100% 2px, 2px 0%, 0% 2px, 2px 0%;
-        }
-        50%{
-          background-size: 100% 2px, 2px 100%, 0% 2px, 2px 0%;
-        }
-        75%{
-          background-size: 100% 2px, 2px 100%, 100% 2px, 2px 0%;
-        }
-        100%{
-          background-size: 100% 2px, 2px 100%, 100% 2px, 2px 100%;
-        }
+        0%{ border-image-source: linear-gradient(0deg, transparent 0 100%); }
+        25%{ border-image-source: linear-gradient(90deg, var(--pink) 0 25%, transparent 25% 100%); }
+        50%{ border-image-source: linear-gradient(180deg, var(--pink) 0 50%, transparent 50% 100%); }
+        75%{ border-image-source: linear-gradient(270deg, var(--pink) 0 75%, transparent 75% 100%); }
+        100%{ border-image-source: linear-gradient(360deg, var(--pink) 0 100%); }
       }
       .promptSecondary.geist{
         font-family: "GeistRegular", system-ui, sans-serif;
