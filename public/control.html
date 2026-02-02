@@ -22,7 +22,7 @@
 
       :root{
         --pink:#e6007e;
-        --pad: 48px;
+        --pad: 56px;
         --radius: 26px;
       }
 
@@ -67,7 +67,9 @@
         height: 100%;
         width: 100%;
         margin: 0 auto;
-        position: relative;
+        display: grid;
+        grid-template-rows: 1fr 1fr;
+        row-gap: 40px;
         padding: calc(env(safe-area-inset-top)) var(--pad) calc(env(safe-area-inset-bottom));
         box-sizing: border-box;
         text-align: center;
@@ -76,26 +78,19 @@
       .topArea,
       .bottomArea{
         width: 100%;
-        position: absolute;
-        left: var(--pad);
-        right: var(--pad);
         display: flex;
         justify-content: center;
         pointer-events: auto;
       }
       .topArea{
-        top: 0;
-        height: auto;
         align-items: flex-start;
       }
       .bottomArea{
-        bottom: env(safe-area-inset-bottom);
-        height: auto;
         align-items: flex-end;
       }
 
       .bottomArea .pad{
-        margin-top: 64px;
+        margin-top: 0;
       }
 
       .title{
