@@ -74,7 +74,7 @@
         margin: 0 auto;
         display: grid;
         grid-template-rows: 1.2fr 0.8fr;
-        row-gap: 96px;
+        row-gap: 80px;
         padding: calc(env(safe-area-inset-top) + 48px) var(--pad) calc(env(safe-area-inset-bottom));
         box-sizing: border-box;
         text-align: center;
@@ -92,7 +92,7 @@
       }
       .bottomArea{
         align-items: flex-end;
-        padding-bottom: 60px;
+        padding-bottom: 72px;
         box-sizing: border-box;
       }
 
@@ -111,7 +111,7 @@
       .promptPanel{
         width: min(90vmin, 90vw);
         display: grid;
-        gap: 18px;
+        gap: 10px;
         align-items: center;
         justify-items: center;
         margin-bottom: 0;
@@ -157,7 +157,7 @@
         display: block;
         visibility: hidden;
         opacity: 0;
-        height: 7em;
+        height: 6em;
         overflow-y: auto;
         transition: opacity 180ms ease;
       }
@@ -169,13 +169,13 @@
       .promptActions{
         width: 100%;
         display: grid;
-        gap: 6px;
+        gap: 4px;
         align-items: center;
         justify-items: center;
         grid-template-columns: 1fr;
         visibility: hidden;
         opacity: 0;
-        height: 190px;
+        height: 170px;
         transition: opacity 180ms ease;
       }
       .promptActions.is-visible{
@@ -318,12 +318,12 @@
 
         .wrap{
           grid-template-rows: 1.45fr 0.55fr;
-          row-gap: 120px;
+          row-gap: 100px;
           padding: calc(env(safe-area-inset-top) + 96px) var(--pad) calc(env(safe-area-inset-bottom) + 32px);
         }
 
         .promptPanel{
-          gap: 14px;
+          gap: 8px;
         }
 
         .promptPrimary,
@@ -348,7 +348,7 @@
         }
 
         .bottomArea{
-          padding-bottom: 84px;
+          padding-bottom: 104px;
         }
       }
 
@@ -994,7 +994,7 @@
       const BASE_W = 820;
       const BASE_H = 1180;
       const MODE = "contain"; // "contain" (kein crop) oder "cover" (crop)
-      const SCALE_MULT = 0.828;
+      const SCALE_MULT = 0.77;
 
       function fit() {
         const sx = window.innerWidth / BASE_W;
