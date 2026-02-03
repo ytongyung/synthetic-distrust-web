@@ -29,6 +29,7 @@
         --radius: 26px;
         --prompt-scale: 1.2;
         --control-scale: 1.34;
+        --control-shift: 0px;
       }
 
       html, body, #stage {
@@ -314,7 +315,7 @@
         grid-template-columns: minmax(0, 1fr) 78px;
         gap: 12px;
         align-items: stretch;
-        transform: scale(var(--control-scale));
+        transform: translateY(var(--control-shift)) scale(var(--control-scale));
         transform-origin: center;
       }
 
@@ -322,6 +323,7 @@
         :root{
           --prompt-scale: 0.96;
           --control-scale: 1.08;
+          --control-shift: -80px;
         }
 
         .wrap{
