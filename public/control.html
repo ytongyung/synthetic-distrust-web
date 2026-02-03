@@ -202,8 +202,8 @@
         color: var(--pink);
         background: #000;
         border-radius: 999px;
-        padding: 14px 23px;
-        font-size: 58px;
+        padding: 13px 22px;
+        font-size: 55px;
         font-family: "RedactionItalic", system-ui, sans-serif;
         font-style: italic;
         cursor: pointer;
@@ -216,8 +216,8 @@
       }
       .promptSecondary.small{
         width: auto;
-        font-size: 45px;
-        padding: 13px 23px;
+        font-size: 43px;
+        padding: 12px 22px;
       }
 
       .btnLabel{
@@ -351,11 +351,11 @@
 
         .promptPrimary,
         .promptSecondary{
-          font-size: 46px;
+          font-size: 44px;
         }
 
         .promptSecondary.small{
-          font-size: 38px;
+          font-size: 36px;
         }
 
         .promptBox{
@@ -390,15 +390,15 @@
         }
 
         .promptPrimary{
-          font-size: 38px;
+          font-size: 36px;
         }
 
         .promptSecondary{
-          font-size: 38px;
+          font-size: 36px;
         }
 
         .promptSecondary.small{
-          font-size: 32px;
+          font-size: 30px;
         }
 
         .promptBox{
@@ -874,6 +874,19 @@
         startScreen.setAttribute("aria-hidden", "true");
       }
 
+      function resetPromptUiForWake(){
+        promptData = null;
+        promptBox.textContent = "";
+        isGenerating = false;
+        stopGenTimer();
+        genProgress.classList.remove("active");
+        genProgress.setAttribute("aria-hidden", "true");
+        progressFill.style.width = "0%";
+        genTimer.textContent = formatCountdown(GEN_DURATION_MS);
+        setStatus("");
+        updatePromptUi();
+      }
+
       function resetIdleTimer(){
         if (idleTimer) clearTimeout(idleTimer);
         idleTimer = setTimeout(() => {
@@ -883,6 +896,7 @@
 
       startScreen.addEventListener("click", () => {
         hideStartScreen();
+        resetPromptUiForWake();
         resetIdleTimer();
       });
 
