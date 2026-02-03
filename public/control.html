@@ -90,9 +90,13 @@
       .topArea{
         align-items: flex-start;
       }
+      .topArea > div{
+        position: relative;
+        padding-top: 64px;
+      }
       .bottomArea{
         align-items: flex-end;
-        padding-bottom: 176px;
+        padding-bottom: 192px;
         box-sizing: border-box;
       }
 
@@ -244,11 +248,15 @@
 
       .genProgress{
         width: min(520px, 100%);
-        margin: 0 auto 0;
+        margin: 0;
         display: none;
         gap: 8px;
         align-items: center;
         justify-items: center;
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
       }
 
       .genProgress.active{
@@ -326,6 +334,10 @@
           gap: 3px;
         }
 
+        .topArea > div{
+          padding-top: 76px;
+        }
+
         .promptPrimary,
         .promptSecondary{
           font-size: 49px;
@@ -348,7 +360,7 @@
         }
 
         .bottomArea{
-          padding-bottom: 212px;
+          padding-bottom: 232px;
         }
       }
 
