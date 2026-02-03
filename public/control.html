@@ -166,6 +166,15 @@
         overflow-y: auto;
         transition: opacity 180ms ease;
       }
+      .promptBox::before{
+        content: "Prompt:";
+        display: block;
+        margin-bottom: 6px;
+        font-family: "RedactionItalic", system-ui, sans-serif;
+        font-style: italic;
+        color: var(--pink);
+        letter-spacing: 0.2px;
+      }
       .promptBox.is-visible{
         visibility: visible;
         opacity: 1;
@@ -762,7 +771,7 @@
                 <div id="promptBox" class="promptBox" aria-live="polite"></div>
                 <div id="promptActions" class="promptActions">
                   <button id="btnRedo" class="promptSecondary geist small" type="button">
-                    <span class="btnLabel">Redo</span>
+                    <span class="btnLabel">Redo Prompt</span>
                     <svg class="btnStroke" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
                       <path d="" />
                     </svg>
