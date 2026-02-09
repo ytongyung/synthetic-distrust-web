@@ -9,6 +9,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: SIMULATE_ONLY
+        value: "1"
+      - key: PROMPT_SOURCE
+        value: out
       - key: REPLICATE_API_TOKEN
         sync: false
     # Persist generated images across deploys/restarts
