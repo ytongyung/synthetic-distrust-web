@@ -487,6 +487,7 @@
     let runStartAt = 0;
     const SPOTLIGHT_MS = 9 * 1000;
     const SPOTLIGHT_FADE_MS = Math.max(0, SPOTLIGHT_MS - 120);
+    const fakeTsByFile = new Map();
 
     function shuffle(arr){
       for (let i = arr.length - 1; i > 0; i--){
@@ -502,6 +503,20 @@
         return;
       }
       slideshowQueue = shuffle([...slideshowList]);
+    }
+
+    function randomRecentTimestamp(){
+      const now = Date.now();
+      const offset = Math.random() * 24 * 60 * 60 * 1000;
+      return new Date(now - offset);
+    }
+
+    function getSlideshowTimestamp(file){
+      if (!file) return randomRecentTimestamp();
+      if (!fakeTsByFile.has(file)) {
+        fakeTsByFile.set(file, randomRecentTimestamp());
+      }
+      return fakeTsByFile.get(file);
     }
 
     function setOverlay(mode){
@@ -810,7 +825,7 @@
       return d ? d <= new Date() : false;
     }
 
-    function renderMeta(meta, file){
+    function renderMeta(meta, file, mode = "slideshow"){
       metaEl.textContent = "";
       if (!meta && !file) return;
 
@@ -833,7 +848,7 @@
       body.className = "prompt-body";
       body.textContent = values.filter(Boolean).join(", ");
 
-      const ts = new Date();
+      const ts = mode === "spotlight" ? new Date() : getSlideshowTimestamp(file);
       const tsLine = document.createElement("div");
       tsLine.className = "prompt-timestamp";
       tsLine.textContent = ts ? `Generated: ${ts.toLocaleString()}` : "Generated: —";
@@ -857,12 +872,8 @@
         return f;
       }));
 
-      const nextList = checks.filter(Boolean);
-      const listChanged = nextList.length !== slideshowList.length;
-      slideshowList = nextList;
-      if (listChanged || !slideshowQueue.length){
-        refillQueue();
-      }
+      slideshowList = checks.filter(Boolean);
+      refillQueue();
     }
 
     function preloadImage(file){
@@ -892,7 +903,7 @@
         if (!file) return;
         setFeatured(file);
         preloadImage(slideshowQueue[0] || slideshowList[0]);
-        renderMeta(await loadMeta(file), file);
+        renderMeta(await loadMeta(file), file, "slideshow");
       };
 
       await tick();
@@ -915,7 +926,7 @@
       setWaiting(false);
       setSpotlight(true);
       setFeatured(file);
-      renderMeta(await loadMeta(file));
+      renderMeta(await loadMeta(file), file, "spotlight");
       fetchImages(); // prep slideshow list while spotlight is on
 
       // nach SPOTLIGHT_MS wieder in die Slideshow zurück
