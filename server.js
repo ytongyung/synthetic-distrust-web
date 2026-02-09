@@ -7,8 +7,17 @@ import { generateOne, generatePrompt } from "./index.js"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const SIMULATE_ONLY = String(process.env.SIMULATE_ONLY || "").toLowerCase() === "true"
-  || String(process.env.SIMULATE_ONLY || "") === "1"
+function parseBoolEnv(value) {
+  if (value === undefined || value === null) return null
+  const v = String(value).trim().toLowerCase()
+  if (["1", "true", "yes", "on"].includes(v)) return true
+  if (["0", "false", "no", "off"].includes(v)) return false
+  return null
+}
+
+const simEnv = parseBoolEnv(process.env.SIMULATE_ONLY)
+const runningOnRender = Boolean(process.env.RENDER) || Boolean(process.env.RENDER_EXTERNAL_HOSTNAME)
+const SIMULATE_ONLY = simEnv !== null ? simEnv : runningOnRender
 const PROMPT_SOURCE = (process.env.PROMPT_SOURCE || (SIMULATE_ONLY ? "out" : "lists")).toLowerCase()
 
 const app = express()
@@ -156,6 +165,17 @@ async function simulateRun({ runId, fallback }) {
 
 app.get("/api/images", (req, res) => {
   res.json({ images: listImagesWithMeta() })
+})
+
+app.get("/api/health", (req, res) => {
+  res.json({
+    ok: true,
+    simulateOnly: SIMULATE_ONLY,
+    promptSource: PROMPT_SOURCE,
+    render: runningOnRender,
+    outCount: listImages().length,
+    hasReplicateToken: Boolean(process.env.REPLICATE_API_TOKEN)
+  })
 })
 
 const clients = new Set()
