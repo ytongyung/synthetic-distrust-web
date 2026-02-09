@@ -7,6 +7,10 @@ import { generateOne, generatePrompt } from "./index.js"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+const SIMULATE_ONLY = String(process.env.SIMULATE_ONLY || "").toLowerCase() === "true"
+  || String(process.env.SIMULATE_ONLY || "") === "1"
+const PROMPT_SOURCE = (process.env.PROMPT_SOURCE || (SIMULATE_ONLY ? "out" : "lists")).toLowerCase()
+
 const app = express()
 app.use(express.json())
 
@@ -106,19 +110,46 @@ function pickFallbackFromOut() {
   return { file, meta, prompt };
 }
 
+function pickPromptFromOut() {
+  const imgs = listImagesWithMeta()
+  if (!imgs.length) return null
+  const file = imgs[Math.floor(Math.random() * imgs.length)]
+  const jsonFile = file.replace(/\.(png|jpe?g|webp)$/i, ".json")
+  const metaPath = path.join(outDir, jsonFile)
+  let meta = null
+  try { if (fs.existsSync(metaPath)) meta = JSON.parse(fs.readFileSync(metaPath, "utf8")) } catch {}
+  if (!meta) return null
+
+  const prompt =
+    (meta?.prompt && String(meta.prompt).trim())
+      ? String(meta.prompt).trim()
+      : [meta?.places, meta?.people, meta?.atmosphere, meta?.gossip, meta?.style].filter(Boolean).join(", ")
+
+  const picked = {
+    places: meta?.places || "",
+    people: meta?.people || "",
+    atmosphere: meta?.atmosphere || "",
+    gossip: meta?.gossip || "",
+    style: meta?.style || ""
+  }
+
+  return { prompt, picked, file }
+}
+
 async function simulateRun({ runId, fallback }) {
   // ein paar “fake” Events fuer debug.js
   broadcast({ type: "sim_start", runId, ts: Date.now(), prompt: fallback.prompt || "" });
-  await sleep(250);
+  await sleep(1500);
   broadcast({ type: "picked", runId, ts: Date.now(), file: fallback.file });
-  await sleep(300);
+  await sleep(2000);
   broadcast({ type: "mutated", runId, ts: Date.now(), mutationMode: "fallback", mutationFields: [] });
-  await sleep(400);
+  await sleep(1500);
   broadcast({ type: "asset_written", runId, ts: Date.now(), file: fallback.file });
 
   // wichtig: UI soll das Bild “wie neu” behandeln
   broadcast({ type: "new", file: fallback.file });
 
+  await sleep(2000);
   broadcast({ type: "run_done", runId, file: fallback.file, simulated: true, ts: Date.now() });
   return fallback.file;
 }
@@ -142,6 +173,13 @@ app.get("/api/stream", (req, res) => {
 
 app.post("/api/prompt", (req, res) => {
   try {
+    if (PROMPT_SOURCE === "out") {
+      const picked = pickPromptFromOut()
+      if (picked) {
+        return res.json({ ok: true, prompt: picked.prompt, picked: picked.picked, sourceFile: picked.file })
+      }
+      // fallback auf Listen, falls keine Metas vorhanden
+    }
     const result = generatePrompt({
       parentMeta: req.body?.parentMeta || null,
       parentFile: req.body?.parentFile || null,
@@ -174,6 +212,17 @@ app.post("/api/generate", async (req, res) => {
   const TIMEOUT_MS = 60_000;
 
   try {
+    if (SIMULATE_ONLY) {
+      broadcast({ type: "run_start", runId, simulated: true });
+      const fb = pickFallbackFromOut();
+      if (!fb) {
+        broadcast({ type: "run_error", runId, error: "simulate-only + no fallback images" });
+        return res.status(503).json({ ok: false, runId, error: "simulate-only + no fallback" });
+      }
+      const file = await simulateRun({ runId, fallback: fb });
+      return res.json({ ok: true, runId, file, simulated: true, reason: "simulate_only" });
+    }
+
     console.log("breaker", {
       now: Date.now(),
       openUntil: breaker.openUntil,
@@ -292,6 +341,17 @@ app.post("/api/mutate", async (req, res) => {
   const TIMEOUT_MS = 60_000
 
   try {
+    if (SIMULATE_ONLY) {
+      broadcast({ type: "run_start", runId, parent, mode, simulated: true })
+      const fb = pickFallbackFromOut()
+      if (!fb) {
+        broadcast({ type: "run_error", runId, error: "simulate-only + no fallback images" })
+        return res.status(503).json({ ok: false, runId, error: "simulate-only + no fallback" })
+      }
+      const file = await simulateRun({ runId, fallback: fb })
+      return res.json({ ok: true, runId, file, simulated: true, reason: "simulate_only" })
+    }
+
     broadcast({ type: "run_start", runId, parent, mode })
 
     const controller = new AbortController()
