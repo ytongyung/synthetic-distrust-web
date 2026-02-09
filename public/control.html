@@ -1131,8 +1131,8 @@
         return parts.join(", ");
       }
 
-      function setPrompt(text, picked){
-        promptData = text ? { prompt: text, picked } : null;
+      function setPrompt(text, picked, sourceFile){
+        promptData = text ? { prompt: text, picked, sourceFile } : null;
         const display = formatPromptDisplay(picked);
         promptBox.textContent = display || "";
         updatePromptUi();
@@ -1159,7 +1159,8 @@
           body: JSON.stringify({
             runId,
             promptOverride: promptData?.prompt || null,
-            pickedOverride: promptData?.picked || null
+            pickedOverride: promptData?.picked || null,
+            sourceFile: promptData?.sourceFile || null
           })
         });
         const j = await r.json().catch(()=> ({}));
@@ -1205,7 +1206,7 @@
         setStatus("");
         try {
           const j = await apiPrompt();
-          setPrompt(j.prompt || "", j.picked || null);
+          setPrompt(j.prompt || "", j.picked || null, j.sourceFile || null);
         } catch (e) {
           setStatus("Error");
           console.error(e);
@@ -1218,7 +1219,7 @@
         setStatus("");
         try {
           const j = await apiPrompt();
-          setPrompt(j.prompt || "", j.picked || null);
+          setPrompt(j.prompt || "", j.picked || null, j.sourceFile || null);
         } catch (e) {
           setStatus("Error");
           console.error(e);

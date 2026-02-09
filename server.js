@@ -119,6 +119,76 @@ function pickFallbackFromOut() {
   return { file, meta, prompt };
 }
 
+function loadMetaForFile(file) {
+  if (!file) return null;
+  const jsonFile = file.replace(/\.(png|jpe?g|webp)$/i, ".json");
+  const metaPath = path.join(outDir, jsonFile);
+  try {
+    if (fs.existsSync(metaPath)) return JSON.parse(fs.readFileSync(metaPath, "utf8"));
+  } catch {}
+  return null;
+}
+
+function buildPromptFromMeta(meta) {
+  if (!meta) return "";
+  if (meta?.prompt && String(meta.prompt).trim()) return String(meta.prompt).trim();
+  return [meta?.places, meta?.people, meta?.atmosphere, meta?.gossip, meta?.style]
+    .filter(Boolean)
+    .join(", ");
+}
+
+function pickBestMatchFromOut({ preferredFile = null, promptOverride = null, pickedOverride = null } = {}) {
+  // 1) If a specific source file was provided, use it if present.
+  if (preferredFile) {
+    const filePath = path.join(outDir, preferredFile);
+    if (fs.existsSync(filePath)) {
+      const meta = loadMetaForFile(preferredFile);
+      const prompt = buildPromptFromMeta(meta);
+      return { file: preferredFile, meta, prompt };
+    }
+  }
+
+  const imgs = listImagesWithMeta();
+  if (!imgs.length) return pickFallbackFromOut();
+
+  const targetPrompt = typeof promptOverride === "string" ? promptOverride.trim().toLowerCase() : "";
+  const targetPicked = pickedOverride && typeof pickedOverride === "object" ? pickedOverride : null;
+
+  if (!targetPrompt && !targetPicked) return pickFallbackFromOut();
+
+  let best = null;
+  let bestScore = -1;
+
+  for (const file of imgs) {
+    const meta = loadMetaForFile(file);
+    if (!meta) continue;
+
+    let score = 0;
+    if (targetPrompt) {
+      const metaPrompt = String(buildPromptFromMeta(meta)).toLowerCase();
+      if (metaPrompt && (metaPrompt.includes(targetPrompt) || targetPrompt.includes(metaPrompt))) {
+        score += 3;
+      }
+    }
+
+    if (targetPicked) {
+      const fields = ["people", "places", "atmosphere", "gossip", "style"];
+      for (const f of fields) {
+        const a = String(targetPicked[f] || "").trim().toLowerCase();
+        const b = String(meta[f] || "").trim().toLowerCase();
+        if (a && b && a === b) score += 1;
+      }
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = { file, meta, prompt: buildPromptFromMeta(meta) };
+    }
+  }
+
+  return best || pickFallbackFromOut();
+}
+
 function pickPromptFromOut() {
   const imgs = listImagesWithMeta()
   if (!imgs.length) return null
@@ -251,7 +321,11 @@ app.post("/api/generate", async (req, res) => {
   try {
     if (SIMULATE_ONLY) {
       broadcast({ type: "run_start", runId, simulated: true });
-      const fb = pickFallbackFromOut();
+      const fb = pickBestMatchFromOut({
+        preferredFile: req.body?.sourceFile || null,
+        promptOverride: req.body?.promptOverride || null,
+        pickedOverride: req.body?.pickedOverride || null
+      });
       if (!fb) {
         broadcast({ type: "run_error", runId, error: "simulate-only + no fallback images" });
         return res.status(503).json({ ok: false, runId, error: "simulate-only + no fallback" });
@@ -274,7 +348,11 @@ app.post("/api/generate", async (req, res) => {
     // Wenn Replicate gerade "kaputt/zu langsam" ist: sofort Fallback
     if (breakerOpen()) {
       controller.abort();
-      const fb = pickFallbackFromOut();
+      const fb = pickBestMatchFromOut({
+        preferredFile: req.body?.sourceFile || null,
+        promptOverride: req.body?.promptOverride || null,
+        pickedOverride: req.body?.pickedOverride || null
+      });
       if (!fb) {
         broadcast({ type: "run_error", runId, error: "breaker open + no fallback images" });
         return res.status(503).json({ ok: false, runId, error: "breaker open + no fallback" });
@@ -316,7 +394,11 @@ app.post("/api/generate", async (req, res) => {
       // Wenn's wiederholt langsam ist: Breaker 2 Minuten oeffnen
       if (breaker.slowCount >= 2) tripBreaker(2 * 60_000);
 
-      const fb = pickFallbackFromOut();
+      const fb = pickBestMatchFromOut({
+        preferredFile: req.body?.sourceFile || null,
+        promptOverride: req.body?.promptOverride || null,
+        pickedOverride: req.body?.pickedOverride || null
+      });
       if (!fb) {
         broadcast({ type: "run_error", runId, error: "timeout + no fallback images" });
         return res.status(503).json({ ok: false, runId, error: "timeout + no fallback" });
@@ -345,7 +427,11 @@ app.post("/api/generate", async (req, res) => {
     console.error("api generate error", e && e.stack ? e.stack : e);
 
     // Fallback auf vorhandenes Bild, falls moeglich
-    const fb = pickFallbackFromOut();
+    const fb = pickBestMatchFromOut({
+      preferredFile: req.body?.sourceFile || null,
+      promptOverride: req.body?.promptOverride || null,
+      pickedOverride: req.body?.pickedOverride || null
+    });
     if (fb) {
       const file = await simulateRun({ runId, fallback: fb });
       return res.status(200).json({ ok: true, runId, file, simulated: true, reason: "error_fallback" });
