@@ -115,6 +115,7 @@ app.get("/out/:name", (req, res, next) => {
       meta.created = nowIso
       meta.timestamp = Date.now()
     }
+    res.set("Cache-Control", "no-store")
     return res.json(meta)
   } catch (e) {
     return res.status(500).json({ ok: false, error: "meta parse failed" })

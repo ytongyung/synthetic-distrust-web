@@ -13,6 +13,8 @@ services:
         value: "1"
       - key: PROMPT_SOURCE
         value: out
+      - key: FAKE_TIMESTAMPS
+        value: "1"
       - key: REPLICATE_API_TOKEN
         sync: false
     # Persist generated images across deploys/restarts

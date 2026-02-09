@@ -448,8 +448,8 @@
     });
 
     let slideshowTimer = null;
-    let slideshowIndex = 0;
     let slideshowList = [];
+    let slideshowQueue = [];
     const SWIPE_MS = 820;
     let placeholderRaf = null;
     let placeholderStart = 0;
@@ -487,6 +487,22 @@
     let runStartAt = 0;
     const SPOTLIGHT_MS = 9 * 1000;
     const SPOTLIGHT_FADE_MS = Math.max(0, SPOTLIGHT_MS - 120);
+
+    function shuffle(arr){
+      for (let i = arr.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function refillQueue(){
+      if (!slideshowList.length){
+        slideshowQueue = [];
+        return;
+      }
+      slideshowQueue = shuffle([...slideshowList]);
+    }
 
     function setOverlay(mode){
       const url = mode === "pink"
@@ -841,14 +857,12 @@
         return f;
       }));
 
-      slideshowList = checks.filter(Boolean);
-
-      // shuffle
-      for (let i = slideshowList.length - 1; i > 0; i--){
-        const j = Math.floor(Math.random() * (i + 1));
-        [slideshowList[i], slideshowList[j]] = [slideshowList[j], slideshowList[i]];
+      const nextList = checks.filter(Boolean);
+      const listChanged = nextList.length !== slideshowList.length;
+      slideshowList = nextList;
+      if (listChanged || !slideshowQueue.length){
+        refillQueue();
       }
-      slideshowIndex = 0;
     }
 
     function preloadImage(file){
@@ -873,17 +887,11 @@
       setSpotlight(false);
 
       const tick = async () => {
-        if (slideshowIndex >= slideshowList.length){
-          for (let i = slideshowList.length - 1; i > 0; i--){
-            const j = Math.floor(Math.random() * (i + 1));
-            [slideshowList[i], slideshowList[j]] = [slideshowList[j], slideshowList[i]];
-          }
-          slideshowIndex = 0;
-        }
-        const file = slideshowList[slideshowIndex];
-        slideshowIndex++;
+        if (!slideshowQueue.length) refillQueue();
+        const file = slideshowQueue.shift();
+        if (!file) return;
         setFeatured(file);
-        preloadImage(slideshowList[slideshowIndex] || slideshowList[0]);
+        preloadImage(slideshowQueue[0] || slideshowList[0]);
         renderMeta(await loadMeta(file), file);
       };
 
