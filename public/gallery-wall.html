@@ -453,7 +453,7 @@
     const SWIPE_MS = 820;
     let placeholderRaf = null;
     let placeholderStart = 0;
-    const GEN_DURATION_MS = 60_000;
+    const GEN_DURATION_MS = 7 * 1000;
     let genRaf = null;
     let genStart = 0;
 
@@ -483,6 +483,10 @@
     }
     let spotlightTimer = null;
     let spotlightFadeTimer = null;
+    let revealTimer = null;
+    let runStartAt = 0;
+    const SPOTLIGHT_MS = 7 * 1000;
+    const SPOTLIGHT_FADE_MS = Math.max(0, SPOTLIGHT_MS - 120);
 
     function setOverlay(mode){
       const url = mode === "pink"
@@ -900,12 +904,12 @@
       renderMeta(await loadMeta(file));
       fetchImages(); // prep slideshow list while spotlight is on
 
-      // nach 9s wieder in die Slideshow zurück
-      spotlightFadeTimer = setTimeout(() => { img.style.opacity = "0"; }, 8920);
+      // nach SPOTLIGHT_MS wieder in die Slideshow zurück
+      spotlightFadeTimer = setTimeout(() => { img.style.opacity = "0"; }, SPOTLIGHT_FADE_MS);
       spotlightTimer = setTimeout(() => {
         setSpotlight(false);
         startSlideshow();
-      }, 9000);
+      }, SPOTLIGHT_MS);
     }
 
     // SSE: wenn ein neues Bild generiert wurde, kurz spotlighten
@@ -921,11 +925,26 @@
         slideshowTimer = null;
         startPlaceholder();
         metaEl.textContent = "";
+        runStartAt = Date.now();
+        if (revealTimer){
+          clearTimeout(revealTimer);
+          revealTimer = null;
+        }
       }
 
       if (msg.type === "run_done" && msg.file){
-        stopPlaceholder();
-        showFeaturedForAWhile(msg.file);
+        const now = Date.now();
+        const targetAt = runStartAt ? (runStartAt + GEN_DURATION_MS) : now;
+        const delay = Math.max(0, targetAt - now);
+        if (revealTimer){
+          clearTimeout(revealTimer);
+          revealTimer = null;
+        }
+        revealTimer = setTimeout(() => {
+          stopPlaceholder();
+          showFeaturedForAWhile(msg.file);
+          revealTimer = null;
+        }, delay);
       }
     };
 
