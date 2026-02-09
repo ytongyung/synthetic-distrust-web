@@ -19,6 +19,8 @@ const simEnv = parseBoolEnv(process.env.SIMULATE_ONLY)
 const runningOnRender = Boolean(process.env.RENDER) || Boolean(process.env.RENDER_EXTERNAL_HOSTNAME)
 const SIMULATE_ONLY = simEnv !== null ? simEnv : runningOnRender
 const PROMPT_SOURCE = (process.env.PROMPT_SOURCE || (SIMULATE_ONLY ? "out" : "lists")).toLowerCase()
+const fakeTsEnv = parseBoolEnv(process.env.FAKE_TIMESTAMPS)
+const FAKE_TIMESTAMPS = fakeTsEnv !== null ? fakeTsEnv : SIMULATE_ONLY
 const RANGE_START = new Date(2026, 0, 9); // 09.01.2026
 
 function parseCreatedAt(meta, file) {
@@ -94,6 +96,29 @@ app.get("/fonts/:name", (req, res) => {
   const file = fontFiles[req.params.name]
   if (!file) return res.sendStatus(404)
   res.sendFile(file)
+})
+
+app.get("/out/:name", (req, res, next) => {
+  res.set("Access-Control-Allow-Origin", "*")
+  const name = String(req.params.name || "")
+  if (!name.toLowerCase().endsWith(".json")) return next()
+
+  const filePath = path.join(outDir, name)
+  if (!fs.existsSync(filePath)) return res.sendStatus(404)
+
+  try {
+    const meta = JSON.parse(fs.readFileSync(filePath, "utf8"))
+    if (FAKE_TIMESTAMPS) {
+      const nowIso = new Date().toISOString()
+      meta.createdAt = nowIso
+      meta.created_at = nowIso
+      meta.created = nowIso
+      meta.timestamp = Date.now()
+    }
+    return res.json(meta)
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: "meta parse failed" })
+  }
 })
 
 app.use("/out", (req, res, next) => {
@@ -276,6 +301,7 @@ app.get("/api/health", (req, res) => {
     simulateOnly: SIMULATE_ONLY,
     promptSource: PROMPT_SOURCE,
     render: runningOnRender,
+    fakeTimestamps: FAKE_TIMESTAMPS,
     outCount: listImages().length,
     hasReplicateToken: Boolean(process.env.REPLICATE_API_TOKEN)
   })
