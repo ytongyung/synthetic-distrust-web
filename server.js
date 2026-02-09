@@ -163,12 +163,23 @@ const clients = new Set()
 app.get("/api/stream", (req, res) => {
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive"
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no"
   })
-  res.write("\n")
+  if (typeof res.flushHeaders === "function") res.flushHeaders()
+  res.write(":ok\n\n")
   clients.add(res)
-  req.on("close", () => clients.delete(res))
+  const ping = setInterval(() => {
+    if (res.writableEnded) return
+    try {
+      res.write("event: ping\ndata: {}\n\n")
+    } catch {}
+  }, 15000)
+  req.on("close", () => {
+    clearInterval(ping)
+    clients.delete(res)
+  })
 })
 
 app.post("/api/prompt", (req, res) => {
@@ -194,7 +205,13 @@ app.post("/api/prompt", (req, res) => {
 
 function broadcast(msg) {
   const data = `data: ${JSON.stringify(msg)}\n\n`
-  for (const res of clients) res.write(data)
+  for (const res of clients) {
+    if (res.writableEnded) {
+      clients.delete(res)
+      continue
+    }
+    try { res.write(data) } catch {}
+  }
 }
 
 let lastSnapshot = new Set(listImages())

@@ -477,6 +477,16 @@
       const ORBIT_SPEED = 0.06;
       const ORBIT_SMOOTH = 0.18;
       const PAN_SMOOTH = 0.22;
+      const recentFiles = new Map();
+      const pendingFiles = [];
+
+      function shouldHandleFile(file){
+        const now = Date.now();
+        const last = recentFiles.get(file) || 0;
+        if (now - last < 12000) return false; // avoid double-handling run_done + new
+        recentFiles.set(file, now);
+        return true;
+      }
 
       function beginRevealLock() {
         revealLock++;
@@ -497,6 +507,53 @@
         }
       }
 
+      function handleNewImage(file, ts){
+        if (!file || typeof file !== "string") return;
+        if (!shouldHandleFile(file)) return;
+        if (!screens.length) {
+          pendingFiles.push({ file, ts });
+          return;
+        }
+
+        generatedCount++;
+        const mesh = applyImageToNextScreen(file);
+        revealForCount(generatedCount);
+        if (mesh) {
+          if (zoomReturnTimer) {
+            clearTimeout(zoomReturnTimer);
+            zoomReturnTimer = null;
+          }
+          const restorePos = camera.position.clone();
+          const restoreTarget = controls.target.clone();
+          beginRevealLock();
+
+          // Mini-Schutz gegen Restbewegung
+          orbitVelDX = 0;
+          orbitVelDY = 0;
+          panVel = 0;
+          orbitInputDX = 0;
+          orbitInputDY = 0;
+          panInput = 0;
+
+          zoomToScreenFront(mesh, { duration: ZOOM_DURATION_MS, followMesh: mesh });
+          const baseTs = typeof ts === "number" ? ts : Date.now();
+          const remaining = Math.max(0, baseTs + NEW_DISPLAY_MS - Date.now());
+          zoomReturnTimer = setTimeout(() => {
+            animateCameraTo({ pos: restorePos, target: restoreTarget, duration: 1400 });
+            // Lock erst NACH Rückfahrt lösen
+            setTimeout(() => endRevealLock(), 1400);
+          }, remaining);
+        }
+      }
+
+      function flushPendingFiles(){
+        if (!screens.length || !pendingFiles.length) return;
+        while (pendingFiles.length) {
+          const next = pendingFiles.shift();
+          handleNewImage(next.file, next.ts);
+        }
+      }
+
       es.onmessage = async (ev) => {
         let msg;
         try { msg = JSON.parse(ev.data); } catch { return; }
@@ -510,35 +567,11 @@
 
         // 1) Neues Bild fertig -> in Sphere mappen + Reveal
         if (msg?.type === "run_done" && msg.file) {
-          generatedCount++;
-          const mesh = applyImageToNextScreen(msg.file);
-          revealForCount(generatedCount);
-          if (mesh) {
-            if (zoomReturnTimer) {
-              clearTimeout(zoomReturnTimer);
-              zoomReturnTimer = null;
-            }
-            const restorePos = camera.position.clone();
-            const restoreTarget = controls.target.clone();
-            beginRevealLock();
+          handleNewImage(msg.file, msg.ts);
+        }
 
-            // Mini-Schutz gegen Restbewegung
-            orbitVelDX = 0;
-            orbitVelDY = 0;
-            panVel = 0;
-            orbitInputDX = 0;
-            orbitInputDY = 0;
-            panInput = 0;
-
-            zoomToScreenFront(mesh, { duration: ZOOM_DURATION_MS, followMesh: mesh });
-            const baseTs = typeof msg.ts === "number" ? msg.ts : Date.now();
-            const remaining = Math.max(0, baseTs + NEW_DISPLAY_MS - Date.now());
-            zoomReturnTimer = setTimeout(() => {
-              animateCameraTo({ pos: restorePos, target: restoreTarget, duration: 1400 });
-              // Lock erst NACH Rückfahrt lösen
-              setTimeout(() => endRevealLock(), 1400);
-            }, remaining);
-          }
+        if (msg?.type === "new" && msg.file) {
+          handleNewImage(msg.file, msg.ts);
         }
 
         // 2) iPad Joystick -> Kamera bewegen
@@ -856,6 +889,7 @@
             if (ai !== null && bi !== null) return ai - bi;
             return a.name.localeCompare(b.name);
           });
+          flushPendingFiles();
           console.log("screens:", screens.map(s => s.name));
           console.log("frames:", Array.from(framesByIndex.entries()));
           console.log("backs:", Array.from(backsByIndex.entries()));
