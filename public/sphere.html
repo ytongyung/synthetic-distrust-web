@@ -477,8 +477,11 @@
       const ORBIT_SPEED = 0.06;
       const ORBIT_SMOOTH = 0.18;
       const PAN_SMOOTH = 0.22;
+      const GEN_DURATION_MS = 7 * 1000;
       const recentFiles = new Map();
       const pendingFiles = [];
+      let runStartAt = 0;
+      let revealTimer = null;
 
       function shouldHandleFile(file){
         const now = Date.now();
@@ -507,7 +510,7 @@
         }
       }
 
-      function handleNewImage(file, ts){
+      function revealImageNow(file, ts){
         if (!file || typeof file !== "string") return;
         if (!shouldHandleFile(file)) return;
         if (!screens.length) {
@@ -536,7 +539,8 @@
           panInput = 0;
 
           zoomToScreenFront(mesh, { duration: ZOOM_DURATION_MS, followMesh: mesh });
-          const baseTs = typeof ts === "number" ? ts : Date.now();
+          const nowTs = Date.now();
+          const baseTs = typeof ts === "number" ? Math.max(ts, nowTs) : nowTs;
           const remaining = Math.max(0, baseTs + NEW_DISPLAY_MS - Date.now());
           zoomReturnTimer = setTimeout(() => {
             animateCameraTo({ pos: restorePos, target: restoreTarget, duration: 1400 });
@@ -544,6 +548,24 @@
             setTimeout(() => endRevealLock(), 1400);
           }, remaining);
         }
+      }
+
+      function handleNewImage(file, ts){
+        if (!file || typeof file !== "string") return;
+        const now = Date.now();
+        if (!runStartAt) runStartAt = now;
+        const targetAt = runStartAt + GEN_DURATION_MS;
+        const delay = Math.max(0, targetAt - now);
+
+        if (revealTimer){
+          clearTimeout(revealTimer);
+          revealTimer = null;
+        }
+
+        revealTimer = setTimeout(() => {
+          revealTimer = null;
+          revealImageNow(file, Date.now());
+        }, delay);
       }
 
       function flushPendingFiles(){
@@ -560,6 +582,11 @@
 
         if (msg?.type === "run_start") {
           loadingBtn.classList.add("isActive");
+          runStartAt = Date.now();
+          if (revealTimer){
+            clearTimeout(revealTimer);
+            revealTimer = null;
+          }
         }
         if (msg?.type === "run_done" || msg?.type === "run_error") {
           loadingBtn.classList.remove("isActive");
