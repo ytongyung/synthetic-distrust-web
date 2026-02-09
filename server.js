@@ -139,17 +139,17 @@ function pickPromptFromOut() {
 async function simulateRun({ runId, fallback }) {
   // ein paar “fake” Events fuer debug.js
   broadcast({ type: "sim_start", runId, ts: Date.now(), prompt: fallback.prompt || "" });
-  await sleep(1500);
+  await sleep(3000);
   broadcast({ type: "picked", runId, ts: Date.now(), file: fallback.file });
-  await sleep(2000);
+  await sleep(4000);
   broadcast({ type: "mutated", runId, ts: Date.now(), mutationMode: "fallback", mutationFields: [] });
-  await sleep(1500);
+  await sleep(3000);
   broadcast({ type: "asset_written", runId, ts: Date.now(), file: fallback.file });
 
   // wichtig: UI soll das Bild “wie neu” behandeln
   broadcast({ type: "new", file: fallback.file });
 
-  await sleep(2000);
+  await sleep(5000);
   broadcast({ type: "run_done", runId, file: fallback.file, simulated: true, ts: Date.now() });
   return fallback.file;
 }

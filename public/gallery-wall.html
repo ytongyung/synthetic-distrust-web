@@ -453,7 +453,7 @@
     const SWIPE_MS = 820;
     let placeholderRaf = null;
     let placeholderStart = 0;
-    const GEN_DURATION_MS = 7 * 1000;
+    const GEN_DURATION_MS = 15 * 1000;
     let genRaf = null;
     let genStart = 0;
 
@@ -812,7 +812,7 @@
       body.className = "prompt-body";
       body.textContent = values.filter(Boolean).join(", ");
 
-      const ts = parseCreatedAt(meta, file);
+      const ts = new Date();
       const tsLine = document.createElement("div");
       tsLine.className = "prompt-timestamp";
       tsLine.textContent = ts ? `Generated: ${ts.toLocaleString()}` : "Generated: —";
