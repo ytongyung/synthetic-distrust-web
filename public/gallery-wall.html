@@ -748,7 +748,7 @@
       return Boolean(meta.gossip || meta.places || meta.people || meta.atmosphere || meta.style);
     }
 
-    const CUTOFF_DATE = new Date(2026, 0, 10);
+    const CUTOFF_DATE = new Date(2026, 0, 9);
 
     function parseCreatedAt(meta, file){
       if (!meta) return null;
@@ -787,6 +787,11 @@
     function isOnOrAfterCutoff(meta, file){
       const d = parseCreatedAt(meta, file);
       return d ? d >= CUTOFF_DATE : false;
+    }
+
+    function isOnOrBeforeToday(meta, file){
+      const d = parseCreatedAt(meta, file);
+      return d ? d <= new Date() : false;
     }
 
     function renderMeta(meta, file){
@@ -832,6 +837,7 @@
         const meta = await loadMeta(f);
         if (meta && !hasPrompt(meta)) return null;
         if (!isOnOrAfterCutoff(meta, f)) return null;
+        if (!isOnOrBeforeToday(meta, f)) return null;
         return f;
       }));
 

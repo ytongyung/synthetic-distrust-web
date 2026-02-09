@@ -19,6 +19,46 @@ const simEnv = parseBoolEnv(process.env.SIMULATE_ONLY)
 const runningOnRender = Boolean(process.env.RENDER) || Boolean(process.env.RENDER_EXTERNAL_HOSTNAME)
 const SIMULATE_ONLY = simEnv !== null ? simEnv : runningOnRender
 const PROMPT_SOURCE = (process.env.PROMPT_SOURCE || (SIMULATE_ONLY ? "out" : "lists")).toLowerCase()
+const RANGE_START = new Date(2026, 0, 9); // 09.01.2026
+
+function parseCreatedAt(meta, file) {
+  if (meta) {
+    const raw = meta.createdAt ?? meta.created_at ?? meta.created ?? meta.timestamp;
+    if (typeof raw === "number") {
+      const ms = raw < 1e12 ? raw * 1000 : raw;
+      const d = new Date(ms);
+      if (!Number.isNaN(d.getTime())) return d;
+    }
+    if (typeof raw === "string") {
+      const d = new Date(raw);
+      if (!Number.isNaN(d.getTime())) return d;
+      const m = raw.match(/(\d{2})\.(\d{2})(?:\.(\d{4}))?/);
+      if (m) {
+        const year = m[3] ? Number(m[3]) : new Date().getFullYear();
+        const d2 = new Date(year, Number(m[2]) - 1, Number(m[1]));
+        if (!Number.isNaN(d2.getTime())) return d2;
+      }
+    }
+  }
+  if (typeof file === "string") {
+    const m = file.match(/img_(\d{10,})/);
+    if (m) {
+      const ms = Number(m[1]);
+      if (Number.isFinite(ms)) {
+        const d = new Date(ms);
+        if (!Number.isNaN(d.getTime())) return d;
+      }
+    }
+  }
+  return null;
+}
+
+function isInDateRange(meta, file) {
+  const d = parseCreatedAt(meta, file);
+  if (!d) return false;
+  const now = new Date();
+  return d >= RANGE_START && d <= now;
+}
 
 const app = express()
 app.use(express.json())
@@ -92,31 +132,29 @@ function listImagesWithMeta() {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-function pickFallbackFromOut() {
+function collectImagesInRange({ requireMeta = false } = {}) {
   const imgs = listImages();
-  if (!imgs.length) return null;
+  if (!imgs.length) return [];
+  const results = [];
+  for (const file of imgs) {
+    const meta = loadMetaForFile(file);
+    if (requireMeta && !meta) continue;
+    if (!isInDateRange(meta, file)) continue;
+    results.push({ file, meta });
+  }
+  return results;
+}
 
-  // bevorzugt Bilder mit Meta JSON daneben
-  const candidates = imgs.filter((img) => {
-    const json = img.replace(/\.(png|jpe?g|webp)$/i, ".json");
-    return fs.existsSync(path.join(outDir, json));
-  });
+function pickFallbackFromOut() {
+  const inRange = collectImagesInRange();
+  if (!inRange.length) return null;
 
-  const pool = candidates.length ? candidates : imgs;
-  const file = pool[Math.floor(Math.random() * pool.length)];
+  const withMeta = inRange.filter((item) => item.meta);
+  const pool = withMeta.length ? withMeta : inRange;
+  const picked = pool[Math.floor(Math.random() * pool.length)];
 
-  // Prompt/Meta optional laden
-  const jsonFile = file.replace(/\.(png|jpe?g|webp)$/i, ".json");
-  const metaPath = path.join(outDir, jsonFile);
-  let meta = null;
-  try { if (fs.existsSync(metaPath)) meta = JSON.parse(fs.readFileSync(metaPath, "utf8")); } catch {}
-
-  const prompt =
-    (meta?.prompt && String(meta.prompt).trim())
-      ? String(meta.prompt).trim()
-      : [meta?.places, meta?.people, meta?.atmosphere, meta?.gossip, meta?.style].filter(Boolean).join(", ");
-
-  return { file, meta, prompt };
+  const prompt = buildPromptFromMeta(picked.meta);
+  return { file: picked.file, meta: picked.meta, prompt };
 }
 
 function loadMetaForFile(file) {
@@ -148,7 +186,7 @@ function pickBestMatchFromOut({ preferredFile = null, promptOverride = null, pic
     }
   }
 
-  const imgs = listImagesWithMeta();
+  const imgs = collectImagesInRange({ requireMeta: true });
   if (!imgs.length) return pickFallbackFromOut();
 
   const targetPrompt = typeof promptOverride === "string" ? promptOverride.trim().toLowerCase() : "";
@@ -159,8 +197,9 @@ function pickBestMatchFromOut({ preferredFile = null, promptOverride = null, pic
   let best = null;
   let bestScore = -1;
 
-  for (const file of imgs) {
-    const meta = loadMetaForFile(file);
+  for (const item of imgs) {
+    const file = item.file;
+    const meta = item.meta;
     if (!meta) continue;
 
     let score = 0;
@@ -190,19 +229,13 @@ function pickBestMatchFromOut({ preferredFile = null, promptOverride = null, pic
 }
 
 function pickPromptFromOut() {
-  const imgs = listImagesWithMeta()
+  const imgs = collectImagesInRange({ requireMeta: true })
   if (!imgs.length) return null
-  const file = imgs[Math.floor(Math.random() * imgs.length)]
-  const jsonFile = file.replace(/\.(png|jpe?g|webp)$/i, ".json")
-  const metaPath = path.join(outDir, jsonFile)
-  let meta = null
-  try { if (fs.existsSync(metaPath)) meta = JSON.parse(fs.readFileSync(metaPath, "utf8")) } catch {}
+  const pickedItem = imgs[Math.floor(Math.random() * imgs.length)]
+  const meta = pickedItem.meta
   if (!meta) return null
 
-  const prompt =
-    (meta?.prompt && String(meta.prompt).trim())
-      ? String(meta.prompt).trim()
-      : [meta?.places, meta?.people, meta?.atmosphere, meta?.gossip, meta?.style].filter(Boolean).join(", ")
+  const prompt = buildPromptFromMeta(meta)
 
   const picked = {
     places: meta?.places || "",
@@ -212,7 +245,7 @@ function pickPromptFromOut() {
     style: meta?.style || ""
   }
 
-  return { prompt, picked, file }
+  return { prompt, picked, file: pickedItem.file }
 }
 
 async function simulateRun({ runId, fallback }) {
