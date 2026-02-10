@@ -96,6 +96,72 @@ const lineInstant = (obj) => {
 
 line("waiting for events on /api/stream")
 
+const GEN_DURATION_MS = 15000;
+let fakeTimer = null;
+let fakeStart = 0;
+let fakeRunId = null;
+let fakeStep = 0;
+
+function stopFakeStream(){
+  if (fakeTimer){
+    clearInterval(fakeTimer);
+    fakeTimer = null;
+  }
+  fakeStart = 0;
+  fakeRunId = null;
+  fakeStep = 0;
+}
+
+function randHex(len){
+  const chars = "abcdef0123456789";
+  let out = "";
+  for (let i = 0; i < len; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
+
+function randInt(a, b){
+  return Math.floor(Math.random() * (b - a + 1)) + a;
+}
+
+function buildFakeLine(step, pct){
+  const stages = ["compile", "link", "sample", "warp", "denoise", "balance", "bake", "compose", "resolve", "finalize"];
+  const stage = stages[step % stages.length];
+  const chunk = randInt(1, 64);
+  const total = 64;
+  const kb = randInt(64, 512);
+  const kernel = randHex(8);
+  const seed = randHex(6);
+  const templates = [
+    `[${pct}%] ${stage} shader stage ${randInt(1, 5)}`,
+    `[${pct}%] kernel patch ${kernel} applied`,
+    `[${pct}%] decode tiles ${chunk}/${total}`,
+    `[${pct}%] fuse frames ${randInt(1, 9)}/${randInt(10, 18)}`,
+    `[${pct}%] write buffer 0x${randHex(6)} (${kb}kb)`,
+    `[${pct}%] stabilize exposure`,
+    `[${pct}%] align features`,
+    `[${pct}%] seed 0x${seed} → jitter ${randInt(1, 9)}`,
+    `> const seed = 0x${seed};`,
+    `> for (let i = 0; i < ${randInt(3, 9)}; i++) { noise[i] = mix(noise[i], latent[i]); }`
+  ];
+  return templates[Math.floor(Math.random() * templates.length)];
+}
+
+function startFakeStream(runId){
+  stopFakeStream();
+  fakeRunId = runId || String(Date.now());
+  fakeStart = performance.now();
+  fakeStep = 0;
+  fakeTimer = setInterval(() => {
+    const elapsed = performance.now() - fakeStart;
+    const pct = Math.min(99, Math.floor((elapsed / GEN_DURATION_MS) * 100));
+    if (elapsed >= GEN_DURATION_MS) {
+      stopFakeStream();
+      return;
+    }
+    line(buildFakeLine(fakeStep++, pct));
+  }, 250);
+}
+
 const es = new EventSource("/api/stream")
 es.onmessage = (e) => {
   try {
@@ -107,6 +173,13 @@ es.onmessage = (e) => {
     } else {
       line(data)
       if (data && data.type === "run_error") reloadWhenIdle = true
+    }
+
+    if (data && data.type === "run_start") {
+      startFakeStream(data.runId);
+    }
+    if (data && (data.type === "run_done" || data.type === "run_error")) {
+      stopFakeStream();
     }
   } catch {
     line(e.data)
