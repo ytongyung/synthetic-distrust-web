@@ -101,6 +101,8 @@ let fakeTimer = null;
 let fakeStart = 0;
 let fakeRunId = null;
 let fakeStep = 0;
+let currentPrompt = "";
+let promptWords = [];
 
 function stopFakeStream(){
   if (fakeTimer){
@@ -110,6 +112,8 @@ function stopFakeStream(){
   fakeStart = 0;
   fakeRunId = null;
   fakeStep = 0;
+  currentPrompt = "";
+  promptWords = [];
 }
 
 function randHex(len){
@@ -123,6 +127,29 @@ function randInt(a, b){
   return Math.floor(Math.random() * (b - a + 1)) + a;
 }
 
+function setPrompt(p){
+  if (!p || typeof p !== "string") return;
+  const cleaned = p.replace(/\s+/g, " ").trim();
+  if (!cleaned) return;
+  currentPrompt = cleaned;
+  promptWords = cleaned.split(" ").filter(Boolean);
+}
+
+function promptFragment(){
+  if (!promptWords.length) return "";
+  const start = Math.max(0, Math.floor(Math.random() * promptWords.length) - 3);
+  const end = Math.min(promptWords.length, start + randInt(3, 9));
+  return promptWords.slice(start, end).join(" ");
+}
+
+function extractPrompt(data){
+  if (!data || typeof data !== "object") return "";
+  if (typeof data.prompt === "string") return data.prompt;
+  if (data.input && typeof data.input.prompt === "string") return data.input.prompt;
+  if (data.data && typeof data.data.prompt === "string") return data.data.prompt;
+  return "";
+}
+
 function buildFakeLine(step, pct){
   const stages = ["compile", "link", "sample", "warp", "denoise", "balance", "bake", "compose", "resolve", "finalize"];
   const stage = stages[step % stages.length];
@@ -131,6 +158,11 @@ function buildFakeLine(step, pct){
   const kb = randInt(64, 512);
   const kernel = randHex(8);
   const seed = randHex(6);
+  const frag = promptFragment();
+  if (frag && Math.random() < 0.22) {
+    return `[${pct}%] prompt: "${frag}"`;
+  }
+
   const templates = [
     `[${pct}%] ${stage} shader stage ${randInt(1, 5)}`,
     `[${pct}%] kernel patch ${kernel} applied`,
@@ -141,7 +173,8 @@ function buildFakeLine(step, pct){
     `[${pct}%] align features`,
     `[${pct}%] seed 0x${seed} → jitter ${randInt(1, 9)}`,
     `> const seed = 0x${seed};`,
-    `> for (let i = 0; i < ${randInt(3, 9)}; i++) { noise[i] = mix(noise[i], latent[i]); }`
+    `> for (let i = 0; i < ${randInt(3, 9)}; i++) { noise[i] = mix(noise[i], latent[i]); }`,
+    currentPrompt ? `> prompt += " ${promptFragment()}";` : `[${pct}%] resolve attention map`
   ];
   return templates[Math.floor(Math.random() * templates.length)];
 }
@@ -167,6 +200,8 @@ es.onmessage = (e) => {
   try {
     const data = JSON.parse(e.data)
     if (data?.type && String(data.type).startsWith("control_")) return
+    const prompt = extractPrompt(data);
+    if (prompt) setPrompt(prompt);
     if (data && (data.type === "run_done" || data.type === "asset_written")) {
       lineInstant(data)
       if (data.type === "run_done") reloadWhenIdle = true
